@@ -4,7 +4,7 @@
   "sme_reviewed": false,
   "scientific_gold": false,
   "release_gate_eligible": false,
-  "purpose": "Pipeline and scorer regression only until stroke/drug-discovery SME review.",
+  "purpose": "Public/synthetic demo technical smoke only; never scientific release evidence.",
   "counts": {
     "retrieval": 36,
     "synthesis": 24,

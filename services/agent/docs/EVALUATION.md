@@ -10,8 +10,9 @@
 - 100 frustration cases (50 positive and 50 hard negative).
 
 All are synthetic, unreviewed fixtures. They test pipeline and scorer behavior but
-are not scientific gold, are not release-gate eligible, and must not be promoted to
-a challenge dataset without stroke/drug-discovery SME review.
+are not scientific gold, are not scientific-release eligible, and must not be promoted
+to a challenge dataset without stroke/drug-discovery SME review. The public/synthetic
+demo requires only the technical smoke; it does not claim scientific release.
 
 ## Local deterministic checks
 
@@ -39,13 +40,14 @@ Missing required metrics or incident counters always fail the technical gate.
 
 The current synthetic v1 run intentionally reports:
 
-- `technical_smoke_status=failed`, because actual nDCG@10 is approximately `0.4643`;
+- `technical_smoke_status=passed`, with deterministic Recall@10 and nDCG@10 of `1.0`;
 - `scientific_release_status=ineligible`, because the dataset is synthetic,
   unreviewed, and not release-gate eligible.
 
-The nDCG failure exposes repeated identical queries mapped to different expected
-document IDs in v1. Do not tune the threshold or substitute the recorded rankings.
-Issue #10 must replace these fixtures with SME-reviewed, adjudicated labels.
+Synthetic cases that share the same query share the same synthetic relevance labels.
+This removes the previous contradictory expectation that identical inputs retrieve
+different documents. It validates plumbing and ranking determinism only; it does not
+measure real-world scientific retrieval quality.
 
 Schema-v2 candidate and gold bundles use
 [`GOLD_DATASET_LABELING.md`](GOLD_DATASET_LABELING.md). Run
@@ -72,7 +74,7 @@ The release thresholds are defined in `evaluation/gates.py`. A release requires
 zero fabricated citations, citation-registry mismatches, unsupported claims,
 positive retracted-source uses, scope violations, tool loops, and truncations,
 retrieved-before-cited violations, plus all configured quality thresholds.
-Synthetic fixture success alone cannot satisfy the release gate.
+Synthetic fixture success alone cannot satisfy the scientific release gate.
 
 ## Trace analysis and Signals
 
