@@ -1,0 +1,16 @@
+title = "Deep Research Disease secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Allow the documented HMAC placeholder only in public env templates"
+condition = "AND"
+regexTarget = "line"
+regexes = [
+  '''^AGENT_HMAC_SECRET=replace-with-a-distinct-at-least-32-character-secret$''',
+  '''^AGENT_HMAC_SECRET=replace-with-at-least-32-random-characters$''',
+]
+paths = [
+  '''(^|/)\.env\.example$''',
+]

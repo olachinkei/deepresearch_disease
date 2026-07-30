@@ -108,7 +108,7 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter @deepresearch/web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env:
           SESSION_SECRET: local-ci-cookie-secret-with-at-least-32-characters
