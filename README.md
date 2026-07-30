@@ -26,7 +26,10 @@ make agent
 make web
 ```
 
-外部キーを設定しない場合も、テストと合成データのデモは実行できます。実検索を許可するには `EXA_API_KEY` に加えて `AGENT_RUNTIME_MODE=live` と `AGENT_ALLOW_TARGET_TO_EXA=true` が必要です。社内PDF ingestionとtrace本文送信は、それぞれ独立したfeature flagで既定無効です。
+外部キーを設定しない場合も、公開corpusと合成データのデモは実行できます。デモは
+`AGENT_DEPLOYMENT_PROFILE=public_synthetic_demo` を使用し、機密featureを常に拒否します。
+機密標的を含む実検索、社内PDF ingestion、未分類の質問・回答やfeedback本文の外部送信は
+デモの対象外です。
 
 ## 検証
 

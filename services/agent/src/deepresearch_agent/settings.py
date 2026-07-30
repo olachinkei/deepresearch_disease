@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from deepresearch_agent.governance.approvals import (
     ApprovalDecision,
+    DataClass,
     sensitive_requirements,
     validate_sensitive_approvals,
 )
@@ -35,6 +36,10 @@ class Settings(BaseSettings):
     corpus_version: str = "public-seed-20260730-c8457953"
     hmac_secret: SecretStr = SecretStr("local-development-only-change-me")
     environment: Literal["local", "pilot"] = "local"
+    deployment_profile: Literal[
+        "public_synthetic_demo",
+        "approved_sensitive_pilot",
+    ] = "public_synthetic_demo"
     sensitive_approval_registry_path: Path | None = None
     sensitive_approval_decisions: tuple[ApprovalDecision, ...] = Field(
         default_factory=tuple,
@@ -129,10 +134,23 @@ class Settings(BaseSettings):
                 self.feedback_comment_to_wandb_enabled
             ),
         )
+        approval_requirements = requirements
+        if self.deployment_profile == "public_synthetic_demo":
+            forbidden_requirements = tuple(
+                requirement
+                for requirement in requirements
+                if requirement.data_class != DataClass.PUBLIC_OR_SYNTHETIC
+            )
+            if forbidden_requirements:
+                raise ValueError(
+                    "sensitive feature approval denied "
+                    "(reason=demo_profile_forbids_sensitive_features)"
+                )
+            approval_requirements = ()
         decisions = validate_sensitive_approvals(
             registry_path=self.sensitive_approval_registry_path,
             environment=self.environment,
-            requirements=requirements,
+            requirements=approval_requirements,
         )
         object.__setattr__(self, "sensitive_approval_decisions", decisions)
         return self

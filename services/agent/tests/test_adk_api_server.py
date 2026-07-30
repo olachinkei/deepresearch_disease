@@ -232,6 +232,7 @@ async def test_production_adk_deadline_cancels_hanging_exa_once(
     )
     settings = Settings(
         runtime_mode="live",
+        deployment_profile="approved_sensitive_pilot",
         allow_target_to_exa=True,
         EXA_API_KEY="synthetic-key",
         turn_deadline_seconds=0.05,

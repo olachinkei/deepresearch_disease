@@ -99,6 +99,17 @@ fail closedとする。
 
 ## 6. 承認記録
 
+### 公開・合成データ限定デモ
+
+repositoryのデモは `AGENT_DEPLOYMENT_PROFILE=public_synthetic_demo` を使用する。
+このprofileでは有効な承認recordが存在しても機密データ経路を起動拒否する。社内PDF、
+社内excerpt、機密研究仮説、未分類の質問・回答、feedback commentを外部送信しない。
+server-owned fingerprintで公開・合成と完全一致した質問・回答だけは既存のtrace content
+gateで送信できる。
+したがってデモの実行にdata manager、SME、store ownerの指名や機密pilotは要求しない。
+将来、別deploymentで機密データを扱う場合だけ、記録済み承認と以下の手順を完了して
+`approved_sensitive_pilot` を明示的に選択する。
+
 承認が必要な機能を有効にする前に、次を記録する。
 
 | 項目 | 内容 |

@@ -15,6 +15,10 @@ W&Bへのcontent送信は、個別のboolean flagだけでは記録済み承認�
 
 ## Decision
 
+- repositoryのデモは `public_synthetic_demo` deployment profileを既定とする。この
+  profileでは承認registryの有無にかかわらず、機密データ経路を起動拒否する。
+  server-owned fingerprintで公開・合成と確定したtrace contentは対象外とする。
+- `approved_sensitive_pilot` は将来の別deployment専用とし、デモでは選択しない。
 - 非secretのJSON承認registryをschema version `2` として管理する。
 - registryにはdata manager、service owner、脳卒中SME、創薬SME、全storeの
   deletion ownerを組織内で一意な担当IDとして記録する。
@@ -23,7 +27,7 @@ W&Bへのcontent送信は、個別のboolean flagだけでは記録済み承認�
 - 各recordは、公開・合成データpilotの完了日と検証者、および全対象storeの削除
   dry-run証跡を必須とする。証跡には実施者、照合件数、backup状態、検証状態、
   repository外の証跡参照先を含める。
-- sensitive flagが1つでも有効なprocessは、
+- `approved_sensitive_pilot` でsensitive flagが1つでも有効なprocessは、
   `AGENT_SENSITIVE_APPROVAL_REGISTRY_PATH` の完全一致recordを起動時に検証する。
 - record欠落、旧schema、role未割当、承認者不一致、対象store不足、pilot/dry-run
   証跡不足、期限切れ、未来日、環境・送信先・data class不一致は起動を拒否する。
@@ -51,6 +55,7 @@ W&Bへのcontent送信は、個別のboolean flagだけでは記録済み承認�
 ### Positive
 
 - flagの誤設定だけでは機密経路を開けない。
+- デモ環境へ承認registryを誤配置しても機密経路を開けない。
 - 承認の期限とscopeをprocess起動時に機械検証できる。
 - retentionと削除責任を承認単位で追跡できる。
 - 公開・合成データで削除経路を検証する前に機密経路が開くことを防げる。
@@ -65,6 +70,7 @@ W&Bへのcontent送信は、個別のboolean flagだけでは記録済み承認�
 
 - missing、invalid/old schema、expired/future、environment、destination、
   data class mismatchをnegative testで拒否する。
+- `public_synthetic_demo` profileでは、機密データ経路を有効なrecordがあっても拒否する。
 - role、対象store、retention owner、pilot verifier、削除dry-run証跡の欠落や
   不一致をnegative testで拒否する。
 - 複数flagに1件のrecordを流用できないことをtestする。

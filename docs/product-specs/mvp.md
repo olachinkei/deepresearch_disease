@@ -4,7 +4,9 @@
 
 脳梗塞創薬 Deep Research Agentは、創薬研究者が標的分子、作用機序、調査質問を入力し、社内・公開論文の根拠を確認しながらmulti-turnで調査するための研究支援アプリである。
 
-MVPはローカル実行と公開論文を基本とする。社内PDFは承認後にだけ有効化する。
+MVPデモはローカル実行と公開論文・合成データだけを使用する。社内PDF、機密研究仮説、
+未分類の質問・回答、feedback本文を外部サービスへ送信しない。これらは将来の
+承認済み別deploymentでのみ有効化できる。
 
 ## 2. 対象利用者
 
@@ -45,6 +47,8 @@ MVPはローカル実行と公開論文を基本とする。社内PDFは承認�
 - 論文の全文再配布
 - 文書ACLを伴う社内検索
 - production deploymentと本認証
+- 機密データpilotとその担当者指名
+- SME review済みdatasetによるscientific release判定
 
 ## 6. Core user journey
 
@@ -280,4 +284,5 @@ Weave Agent turn traceがまだ到着していなくてもfeedbackはローカ�
 
 ### Scenario H: private data gate
 
-承認の記録がない状態では、社内PDF ingestion、内部excerptのGemini送信、質問・回答のW&B送信、機密標的のExa送信が拒否される。
+`public_synthetic_demo` profileでは承認recordが存在しても、社内PDF ingestion、
+内部excerptのGemini送信、未分類の質問・回答のW&B送信、機密標的のExa送信が拒否される。
