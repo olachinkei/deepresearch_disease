@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date
 from enum import StrEnum
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 logger = logging.getLogger(__name__)
+OWNER_ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"
 
 
 class SensitiveFeature(StrEnum):
@@ -64,6 +66,65 @@ class RetentionRule(BaseModel):
         return value
 
 
+class GovernanceRoles(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    data_manager_id: str = Field(pattern=OWNER_ID_PATTERN)
+    service_owner_id: str = Field(pattern=OWNER_ID_PATTERN)
+    stroke_sme_id: str = Field(pattern=OWNER_ID_PATTERN)
+    drug_discovery_sme_id: str = Field(pattern=OWNER_ID_PATTERN)
+    deletion_owners: dict[RetentionStore, str]
+
+    @field_validator("deletion_owners")
+    @classmethod
+    def validate_deletion_owners(
+        cls,
+        values: dict[RetentionStore, str],
+    ) -> dict[RetentionStore, str]:
+        if set(values) != set(RetentionStore):
+            raise ValueError("every retention store requires a deletion owner")
+        if any(re.fullmatch(OWNER_ID_PATTERN, value) is None for value in values.values()):
+            raise ValueError("deletion owners require stable non-blank IDs")
+        return values
+
+    @model_validator(mode="after")
+    def validate_sme_independence(self) -> GovernanceRoles:
+        if self.stroke_sme_id == self.drug_discovery_sme_id:
+            raise ValueError("stroke and drug-discovery SME IDs must be distinct")
+        return self
+
+
+class StoreDeletionEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    store: RetentionStore
+    dry_run_on: date
+    executed_by: str = Field(pattern=OWNER_ID_PATTERN)
+    matched_record_count: int = Field(ge=0)
+    backup_status: Literal[
+        "not_applicable",
+        "verified_expiry",
+        "verified_purge",
+    ]
+    verification_status: Literal["verified"]
+    evidence_reference: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{2,255}$")
+
+
+class PilotVerification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    public_synthetic_pilot_on: date
+    verified_by: str = Field(pattern=OWNER_ID_PATTERN)
+    deletion_evidence: tuple[StoreDeletionEvidence, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_unique_stores(self) -> PilotVerification:
+        stores = [evidence.store for evidence in self.deletion_evidence]
+        if len(stores) != len(set(stores)):
+            raise ValueError("pilot deletion evidence stores must be unique")
+        return self
+
+
 class ApprovalRecord(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -78,6 +139,7 @@ class ApprovalRecord(BaseModel):
     expires_on: date
     constraints: tuple[str, ...] = Field(min_length=1)
     retention: tuple[RetentionRule, ...] = Field(min_length=1)
+    pilot_verification: PilotVerification
 
     @field_validator("purpose", "approved_by")
     @classmethod
@@ -97,6 +159,13 @@ class ApprovalRecord(BaseModel):
     def validate_dates_and_retention(self) -> ApprovalRecord:
         if self.expires_on < self.approved_on:
             raise ValueError("approval expiry cannot precede approval date")
+        if self.pilot_verification.public_synthetic_pilot_on > self.approved_on:
+            raise ValueError("public/synthetic pilot must precede approval")
+        if any(
+            evidence.dry_run_on > self.approved_on
+            for evidence in self.pilot_verification.deletion_evidence
+        ):
+            raise ValueError("deletion dry-run evidence must precede approval")
         stores = [rule.store for rule in self.retention]
         if len(stores) != len(set(stores)):
             raise ValueError("approval retention stores must be unique")
@@ -106,7 +175,8 @@ class ApprovalRecord(BaseModel):
 class ApprovalRegistry(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: Literal["1"]
+    schema_version: Literal["2"]
+    roles: GovernanceRoles
     approvals: tuple[ApprovalRecord, ...]
 
     @model_validator(mode="after")
@@ -137,6 +207,50 @@ class ApprovalDecision(BaseModel):
 
 class ApprovalConfigurationError(ValueError):
     """Sanitized failure raised before a sensitive feature can start."""
+
+
+FEATURE_RETENTION_STORES: dict[SensitiveFeature, frozenset[RetentionStore]] = {
+    SensitiveFeature.INTERNAL_PDF_INGESTION: frozenset({RetentionStore.CORPUS_DB}),
+    SensitiveFeature.INTERNAL_CONTENT_TO_GEMINI: frozenset(
+        {
+            RetentionStore.WEB_DB,
+            RetentionStore.ADK_SESSION_DB,
+            RetentionStore.CORPUS_DB,
+            RetentionStore.VENDOR,
+        }
+    ),
+    SensitiveFeature.RESEARCH_HYPOTHESIS_TO_GEMINI: frozenset(
+        {
+            RetentionStore.WEB_DB,
+            RetentionStore.ADK_SESSION_DB,
+            RetentionStore.VENDOR,
+        }
+    ),
+    SensitiveFeature.RESEARCH_HYPOTHESIS_TO_EXA: frozenset(
+        {
+            RetentionStore.WEB_DB,
+            RetentionStore.ADK_SESSION_DB,
+            RetentionStore.VENDOR,
+        }
+    ),
+    SensitiveFeature.WANDB_TRACE_INPUT_CONTENT: frozenset(
+        {
+            RetentionStore.WEB_DB,
+            RetentionStore.ADK_SESSION_DB,
+            RetentionStore.WANDB,
+        }
+    ),
+    SensitiveFeature.WANDB_TRACE_OUTPUT_CONTENT: frozenset(
+        {
+            RetentionStore.WEB_DB,
+            RetentionStore.ADK_SESSION_DB,
+            RetentionStore.WANDB,
+        }
+    ),
+    SensitiveFeature.WANDB_FEEDBACK_COMMENT: frozenset(
+        {RetentionStore.WEB_DB, RetentionStore.WANDB}
+    ),
+}
 
 
 def sensitive_requirements(
@@ -246,20 +360,30 @@ def validate_sensitive_approvals(
                 "sensitive feature approval denied "
                 f"(feature={requirement.feature.value}, reason={reason})"
             )
-        record = sorted(active, key=lambda item: (item.expires_on, item.approval_id))[0]
-        required_retention_store = {
-            Destination.LOCAL_CORPUS: RetentionStore.CORPUS_DB,
-            Destination.GEMINI: RetentionStore.VENDOR,
-            Destination.EXA: RetentionStore.VENDOR,
-            Destination.WANDB: RetentionStore.WANDB,
-        }[requirement.destination]
-        if required_retention_store not in {
-            rule.store for rule in record.retention
-        }:
+        required_stores = FEATURE_RETENTION_STORES[requirement.feature]
+        valid: list[ApprovalRecord] = []
+        failure_reasons: list[str] = []
+        for candidate in sorted(
+            active,
+            key=lambda item: (item.expires_on, item.approval_id),
+        ):
+            readiness_reason = _record_readiness_failure(
+                record=candidate,
+                roles=registry.roles,
+                required_stores=required_stores,
+                effective_date=effective_date,
+            )
+            if readiness_reason is None:
+                valid.append(candidate)
+            else:
+                failure_reasons.append(readiness_reason)
+        if not valid:
+            reason = failure_reasons[0] if failure_reasons else "scope_mismatch"
             raise ApprovalConfigurationError(
                 "sensitive feature approval denied "
-                f"(feature={requirement.feature.value}, reason=retention_scope_missing)"
+                f"(feature={requirement.feature.value}, reason={reason})"
             )
+        record = valid[0]
         decisions.append(
             ApprovalDecision(
                 approval_id=record.approval_id,
@@ -269,6 +393,41 @@ def validate_sensitive_approvals(
             )
         )
     return tuple(decisions)
+
+
+def _record_readiness_failure(
+    *,
+    record: ApprovalRecord,
+    roles: GovernanceRoles,
+    required_stores: frozenset[RetentionStore],
+    effective_date: date,
+) -> str | None:
+    if record.approved_by != roles.data_manager_id:
+        return "data_manager_mismatch"
+    retention_by_store = {rule.store: rule for rule in record.retention}
+    if not required_stores.issubset(retention_by_store):
+        return "retention_scope_missing"
+    if any(
+        retention_by_store[store].deletion_owner != roles.deletion_owners[store]
+        for store in required_stores
+    ):
+        return "deletion_owner_mismatch"
+    verification = record.pilot_verification
+    if verification.verified_by != roles.data_manager_id:
+        return "pilot_verifier_mismatch"
+    evidence_by_store = {evidence.store: evidence for evidence in verification.deletion_evidence}
+    if not required_stores.issubset(evidence_by_store):
+        return "deletion_evidence_missing"
+    if any(
+        evidence_by_store[store].executed_by != roles.deletion_owners[store]
+        for store in required_stores
+    ):
+        return "deletion_executor_mismatch"
+    if verification.public_synthetic_pilot_on > effective_date or any(
+        evidence_by_store[store].dry_run_on > effective_date for store in required_stores
+    ):
+        return "pilot_evidence_in_future"
+    return None
 
 
 def log_approval_decisions(decisions: tuple[ApprovalDecision, ...]) -> None:

@@ -112,14 +112,17 @@ fail closedとする。
 | 承認日 | YYYY-MM-DD |
 | 有効期限 | YYYY-MM-DDまたは再審査条件 |
 | 制約 | corpus、利用者、project、保持期間 |
+| 役割 | data manager、service owner、脳卒中SME、創薬SME、全store owner |
+| 事前検証 | 公開・合成データpilot、全対象storeの削除dry-run証跡 |
 
 未記入の項目は未承認として扱う。秘密情報や内部本文をこの記録へ貼り付けない。
 
 承認recordは [ADR-0005](adr/0005-sensitive-feature-approval-registry.md) の
 versioned JSON schemaに従う。機密feature flagを有効にしたprocessは
 `AGENT_SENSITIVE_APPROVAL_REGISTRY_PATH` を読み、機能、送信先、環境、data class、
-有効期間の完全一致を起動時に検証する。不一致や読込失敗では起動しない。承認者、
-目的、制約は通常ログやtraceへ出さず、approval IDと判定だけを記録する。
+有効期間、役割、全対象storeのretention、pilot/dry-run証跡を起動時に検証する。
+不一致、旧schema、読込失敗では起動しない。承認者、担当ID、目的、制約、証跡参照先は
+通常ログやtraceへ出さず、approval IDと判定だけを記録する。
 
 ## 7. Identityとsession
 
@@ -280,8 +283,9 @@ MVPではproductionの保持期間を定義しない。ただし、実装は次�
 
 production pilot前に、保持期間、削除責任者、backup、W&B側のretentionを別途決定する。
 機密pilotでは承認recordにstore別の保持日数、削除責任者、backup方針、削除確認方法を
-必須とし、[pilot runbook](runbooks/sensitive-data-pilot.md) の横断dry-runを完了する。
-担当者未指名またはvendor側削除確認ができない場合は機密featureを有効化しない。
+必須とし、公開・合成データで[pilot runbook](runbooks/sensitive-data-pilot.md) の
+横断dry-runを完了して全対象storeの証跡を記録する。担当者未指名、証跡不足、
+またはvendor側削除確認ができない場合は機密featureを有効化しない。
 
 ## 17. Security test
 

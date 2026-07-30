@@ -18,6 +18,8 @@ the corresponding explicit data-policy flag; no provider is silently enabled.
 Sensitive-data flags additionally require an exact, unexpired approval record at
 `AGENT_SENSITIVE_APPROVAL_REGISTRY_PATH`. Missing, invalid, expired, or scope-mismatched
 records stop configuration before a provider or internal ingestion path is built.
+Schema v2 also fail-closes unless named role IDs, retention for every affected store,
+and verified public/synthetic pilot deletion evidence for every affected store agree.
 
 ### Exa failure and metadata behavior
 

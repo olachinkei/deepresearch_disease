@@ -13,16 +13,26 @@ pilot開始前に、次をすべて満たす。
 3. recordのconstraintsへ対象corpus、利用者、project、用途を記録する。
 4. Web DB、ADK session DB、Corpus DB、W&B/vendorについて保持日数、backup方針、
    deletion owner、削除確認方法をrecordへ記録する。
-5. registryをrepository外のアクセス制御済み場所へ置き、対象processだけへ
+5. 公開・合成データだけで同じ経路のpilotと横断削除dry-runを行い、対象store
+   ごとの件数、backup状態、検証結果、repository外の証跡参照先をrecordへ記録する。
+6. registryをrepository外のアクセス制御済み場所へ置き、対象processだけへ
    `AGENT_SENSITIVE_APPROVAL_REGISTRY_PATH` を渡す。
-6. 必要な個別flagだけを有効化し、processを再起動する。
-7. 起動ログのapproval ID、feature、destination、environment、`approved` を照合する。
+7. 必要な個別flagだけを有効化し、processを再起動する。
+8. 起動ログのapproval ID、feature、destination、environment、`approved` を照合する。
 
-未記入、期限切れ、owner未指名、vendor削除手段未確認の項目が1つでもあれば開始しない。
+未記入、期限切れ、owner未指名、pilot/dry-run未検証、vendor削除手段未確認の項目が
+1つでもあれば開始しない。
 
 ## Registry shape
 
-registryは `{"schema_version":"1","approvals":[...]}` とする。各approvalには次が必要:
+registryは `{"schema_version":"2","roles":{...},"approvals":[...]}` とする。
+`roles`には次が必要:
+
+- `data_manager_id`, `service_owner_id`
+- 相互に異なる`stroke_sme_id`, `drug_discovery_sme_id`
+- Web DB、ADK session DB、Corpus DB、W&B、vendorをすべて含む`deletion_owners`
+
+各approvalには次が必要:
 
 - `approval_id`
 - `feature`
@@ -31,11 +41,15 @@ registryは `{"schema_version":"1","approvals":[...]}` とする。各approval�
 - `data_class`
 - `purpose`, `approved_by`, `approved_on`, `expires_on`
 - 1件以上の`constraints`
-- 1件以上のstore別`retention`
+- 機能が触れる全storeの`retention`
+- 公開・合成データpilotの完了日と検証者を含む`pilot_verification`
+- 全対象storeについて実施者、照合件数、backup状態、検証結果、証跡参照先を含む
+  `deletion_evidence`
 
 有効なfeature/data class値は
 `services/agent/src/deepresearch_agent/governance/approvals.py` を正とする。
-recordにsecret、質問、回答、内部excerpt、表示名を記録しない。
+担当IDと証跡参照先には表示名を使わない。recordにsecret、質問、回答、内部excerpt、
+表示名を記録しない。schema version `1` は機密featureの起動に使用できない。
 
 ## Cross-store deletion dry-run
 
@@ -56,7 +70,8 @@ tool生レスポンス、表示名を出さない。DB間joinや共有DBを作�
 ## Deletion order and verification
 
 1. 対象feature flagを無効化し、関連processを停止する。
-2. immutableなdry-run inventoryをincident/pilot ticketへ添付する。
+2. immutableなdry-run inventoryをincident/pilot ticketへ添付し、その参照先を
+   approval recordへ記録する。
 3. Web DB、ADK session DB、Corpus DBを各ownerが削除する。
 4. W&B/vendor側の削除を各ownerが実行し、receiptまたはpolicy evidenceを記録する。
 5. backupのexpiryまたはpurge状態を確認する。

@@ -26,13 +26,35 @@ def test_sensitive_flags_are_closed_without_registry() -> None:
         ({"data_class": "internal_document"}, "scope_mismatch"),
         ({"expires_on": "2026-01-02"}, "expired_or_inactive"),
         ({"approved_on": "2099-01-01"}, "expired_or_inactive"),
-        ({"retention_store": "web_db"}, "retention_scope_missing"),
+        ({"schema_version": "1"}, "registry_invalid"),
+        ({"retention_stores": ("vendor",)}, "retention_scope_missing"),
+        (
+            {"evidence_stores": ("web_db", "vendor")},
+            "deletion_evidence_missing",
+        ),
+        ({"approved_by": "other-manager-001"}, "data_manager_mismatch"),
+        ({"pilot_verified_by": "other-manager-001"}, "pilot_verifier_mismatch"),
+        (
+            {"retention_owner_overrides": {"vendor": "wrong-owner-001"}},
+            "deletion_owner_mismatch",
+        ),
+        (
+            {"evidence_executor_overrides": {"vendor": "wrong-owner-001"}},
+            "deletion_executor_mismatch",
+        ),
         ({"approved_by": "   "}, "registry_invalid"),
+        (
+            {
+                "stroke_sme_id": "same-sme-001",
+                "drug_discovery_sme_id": "same-sme-001",
+            },
+            "registry_invalid",
+        ),
     ],
 )
 def test_sensitive_approval_rejects_scope_and_date_mismatch(
     approval_registry_factory: Callable[..., Path],
-    override: dict[str, str],
+    override: dict[str, object],
     expected_reason: str,
 ) -> None:
     registry = approval_registry_factory(**override)
@@ -64,7 +86,9 @@ def test_sensitive_approval_accepts_exact_scope_and_logs_only_safe_fields(
     assert len(settings.sensitive_approval_decisions) == 1
     assert "approval_id=synthetic-approval-001" in caplog.text
     assert "decision=approved" in caplog.text
-    assert "Synthetic Test Data Manager" not in caplog.text
+    assert "test-data-manager-001" not in caplog.text
+    assert "test-stroke-sme-001" not in caplog.text
+    assert "test-vendor-owner-001" not in caplog.text
     assert "Synthetic test approval" not in caplog.text
 
 

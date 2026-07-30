@@ -15,13 +15,19 @@ W&Bへのcontent送信は、個別のboolean flagだけでは記録済み承認�
 
 ## Decision
 
-- 非secretのJSON承認registryをschema version `1` として管理する。
+- 非secretのJSON承認registryをschema version `2` として管理する。
+- registryにはdata manager、service owner、脳卒中SME、創薬SME、全storeの
+  deletion ownerを組織内で一意な担当IDとして記録する。
 - 各recordはapproval ID、機能、送信先、環境、data class、目的、承認者、承認日、
-  有効期限、制約、store別retention/deletion責任を必須とする。
+  有効期限、制約、機能が触れる全storeのretention/deletion責任を必須とする。
+- 各recordは、公開・合成データpilotの完了日と検証者、および全対象storeの削除
+  dry-run証跡を必須とする。証跡には実施者、照合件数、backup状態、検証状態、
+  repository外の証跡参照先を含める。
 - sensitive flagが1つでも有効なprocessは、
   `AGENT_SENSITIVE_APPROVAL_REGISTRY_PATH` の完全一致recordを起動時に検証する。
-- record欠落、schema不正、期限切れ、未来日、環境・送信先・data class不一致は
-  起動を拒否する。別機能のrecordは流用しない。
+- record欠落、旧schema、role未割当、承認者不一致、対象store不足、pilot/dry-run
+  証跡不足、期限切れ、未来日、環境・送信先・data class不一致は起動を拒否する。
+  別機能のrecordは流用しない。
 - 通常ログにはapproval ID、機能、送信先、環境、判定だけを残す。承認者、目的、
   制約、本文は残さない。
 - registryをfeature flagの代用にしない。flagと有効recordの両方を必要とする。
@@ -47,6 +53,7 @@ W&Bへのcontent送信は、個別のboolean flagだけでは記録済み承認�
 - flagの誤設定だけでは機密経路を開けない。
 - 承認の期限とscopeをprocess起動時に機械検証できる。
 - retentionと削除責任を承認単位で追跡できる。
+- 公開・合成データで削除経路を検証する前に機密経路が開くことを防げる。
 
 ### Negative
 
@@ -56,8 +63,10 @@ W&Bへのcontent送信は、個別のboolean flagだけでは記録済み承認�
 
 ## Verification
 
-- missing、invalid、expired/future、environment、destination、data class mismatchを
-  negative testで拒否する。
+- missing、invalid/old schema、expired/future、environment、destination、
+  data class mismatchをnegative testで拒否する。
+- role、対象store、retention owner、pilot verifier、削除dry-run証跡の欠落や
+  不一致をnegative testで拒否する。
 - 複数flagに1件のrecordを流用できないことをtestする。
 - logにapproval IDと判定だけが入り、承認者や目的が入らないことをtestする。
 - [機密データpilot runbook](../runbooks/sensitive-data-pilot.md) のdry-runと
