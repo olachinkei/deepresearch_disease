@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Callable
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -221,6 +223,7 @@ def _workflow(
 async def test_production_adk_deadline_cancels_hanging_exa_once(
     tmp_path: Any,
     monkeypatch: pytest.MonkeyPatch,
+    approval_registry_factory: Callable[..., Path],
 ) -> None:
     safe_attributes: list[dict[str, Any]] = []
     monkeypatch.setattr(
@@ -235,6 +238,7 @@ async def test_production_adk_deadline_cancels_hanging_exa_once(
         exa_retry_backoff_seconds=0,
         database_path=tmp_path / "corpus.sqlite",
         session_database_path=tmp_path / "sessions.sqlite",
+        sensitive_approval_registry_path=approval_registry_factory(),
     )
     exa = HangingExa()
     workflow = _workflow(

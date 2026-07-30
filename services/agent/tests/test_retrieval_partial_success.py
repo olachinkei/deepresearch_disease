@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -57,6 +59,7 @@ class FailingExa:
 @pytest.mark.asyncio
 async def test_exa_failure_retries_finitely_and_returns_internal_partial_success(
     tmp_path: Any,
+    approval_registry_factory: Callable[..., Path],
 ) -> None:
     settings = Settings(
         runtime_mode="live",
@@ -66,6 +69,7 @@ async def test_exa_failure_retries_finitely_and_returns_internal_partial_success
         hmac_secret="test-secret-with-at-least-24-characters",
         database_path=tmp_path / "corpus.sqlite",
         session_database_path=tmp_path / "sessions.sqlite",
+        sensitive_approval_registry_path=approval_registry_factory(),
     )
     exa = FailingExa()
     workflow = ResearchWorkflow(

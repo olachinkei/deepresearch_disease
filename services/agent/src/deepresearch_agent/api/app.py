@@ -22,6 +22,7 @@ from deepresearch_agent.api.schemas import (
 from deepresearch_agent.application.normalization import ScopeError
 from deepresearch_agent.application.workflow import ResearchWorkflow
 from deepresearch_agent.domain.models import WorkflowEvent
+from deepresearch_agent.governance.approvals import log_approval_decisions
 from deepresearch_agent.infrastructure.corpus import CorpusRepository
 from deepresearch_agent.infrastructure.embeddings import HashEmbeddingProvider
 from deepresearch_agent.infrastructure.exa import ExaSearchClient
@@ -66,6 +67,7 @@ def create_app(
     feedback_synchronizer: FeedbackSynchronizer | None = None,
 ) -> FastAPI:
     configured = settings or get_settings()
+    log_approval_decisions(configured.sensitive_approval_decisions)
     tracing_enabled = configure_otel()
     owned_workflow = workflow is None
     research_workflow = workflow or build_workflow(configured)
@@ -269,6 +271,7 @@ def create_adk_app(
     workflow: ResearchWorkflow | None = None,
 ) -> FastAPI:
     configured = settings or get_settings()
+    log_approval_decisions(configured.sensitive_approval_decisions)
     configure_otel()
     owned_workflow = workflow is None
     research_workflow = workflow or build_workflow(configured)

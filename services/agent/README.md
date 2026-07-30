@@ -15,6 +15,9 @@ curl http://127.0.0.1:8001/healthz
 `AGENT_RUNTIME_MODE=mock` is the default. It requires no external API key and emits
 the same SSE contract as a live run. Live Exa or Gemini calls require both a key and
 the corresponding explicit data-policy flag; no provider is silently enabled.
+Sensitive-data flags additionally require an exact, unexpired approval record at
+`AGENT_SENSITIVE_APPROVAL_REGISTRY_PATH`. Missing, invalid, expired, or scope-mismatched
+records stop configuration before a provider or internal ingestion path is built.
 
 ### Exa failure and metadata behavior
 
@@ -92,6 +95,7 @@ Its exact runtime snapshot ID is `public-seed-20260730-c8457953`.
 
 - The disease scope is fixed to `ischemic stroke`.
 - Internal ingestion is disabled until `AGENT_INTERNAL_INGESTION_ENABLED=true`.
+- Sensitive flags remain disabled unless a deployment-specific approval registry validates.
 - Internal excerpts are never sent to Exa.
 - Gemini receives public or internal evidence only when the matching approval flag is true.
 - ADK message/tool content capture is forced off before ADK is imported.
