@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     feedback_comment_to_wandb_enabled: bool = False
     internal_ingestion_enabled: bool = False
     exa_retry_backoff_seconds: float = Field(default=0.25, ge=0.0, le=5.0)
+    turn_deadline_seconds: float = Field(default=180.0, gt=0.0, le=180.0)
 
     exa_api_key: SecretStr | None = Field(default=None, validation_alias="EXA_API_KEY")
     google_api_key: SecretStr | None = Field(default=None, validation_alias="GOOGLE_API_KEY")

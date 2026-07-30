@@ -303,19 +303,20 @@ class ResearchWorkflow:
         for query in build_search_queries(normalized):
             self._raise_if_cancelled(cancel_event)
             budget.consume(ToolKind.INTERNAL_SEARCH, {"query": query, "limit": 10})
-            internal_task = asyncio.create_task(
-                self._search_internal(query=query, limit=10)
-            )
-            exa_task: asyncio.Task[list[Evidence]] | None = None
-            if self._exa and self._settings.live_exa_enabled:
-                exa_task = asyncio.create_task(
-                    self._search_exa_with_retry(
-                        query=query,
-                        num_results=10,
-                        budget=budget,
-                        cancel_event=cancel_event,
-                    )
+            async with asyncio.TaskGroup() as task_group:
+                internal_task = task_group.create_task(
+                    self._search_internal(query=query, limit=10)
                 )
+                exa_task: asyncio.Task[list[Evidence]] | None = None
+                if self._exa and self._settings.live_exa_enabled:
+                    exa_task = task_group.create_task(
+                        self._search_exa_with_retry(
+                            query=query,
+                            num_results=10,
+                            budget=budget,
+                            cancel_event=cancel_event,
+                        )
+                    )
             round_evidence = await internal_task
             if exa_task:
                 round_evidence.extend(await exa_task)

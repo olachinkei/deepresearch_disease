@@ -142,10 +142,14 @@
 - [x] tool loopとno-progress停止条件を実装する。
 - [x] context使用比率とtruncationを検出する。
 - [x] 4 turnごとのcompactionを実装する。
+- [x] production ADK `/run_sse`全体へ最大180秒のhard deadlineを強制する。
+- [x] cancel時にprovider child taskを中断し、terminal eventを1件だけ返す。
+- [x] timeout/cancelのfinish reasonと分類済みflagをmanifest / traceへ記録する。
 
 ### Exit criteria
 
 - 検索toolが6回、180秒を超えない。
+- timeout/cancel後にanswer delta、completed、tool結果を追加送信しない。
 - evidence packが件数、文字数、論文別上限を超えない。
 - citationが取得済みsourceだけを参照し、同一論文の複数excerptも個別に解決できる。
 - fabricated citation、scope違反、tool loop、truncationが0件である。

@@ -75,6 +75,11 @@ Webサービスは検索、LLM呼び出し、corpus DB、ADK sessionを直接操
 
 Agentサービスは表示名とWebのCookieを受け取らない。
 
+ADK runtimeは各turnの実行taskをregistryで追跡する。`/run_sse` invocation全体を
+最大180秒のdeadline scopeで囲み、cancel endpointは対応するtaskとchild provider
+taskを直接中断する。terminal stateは送信前にregistryで確定し、complete/cancel race
+でも`completed`、`cancelled`、`error`のいずれか1件だけを送る。
+
 ## 4. DB所有権
 
 ### 4.1 Web DB
@@ -149,6 +154,8 @@ WebはADKの生eventをそのまま中継しない。
 | `error` | 回復可能な分類済みerror | stack、secret、外部payloadを含めない |
 
 各payloadは`schema_version`、`conversation_id`、`turn_id`を持つ。順序、重複、切断再接続をtestする。
+timeout/cancelの内部eventは安全なrun manifestを持ち、本文を含まない
+`finish_reason`と分類済みflagを記録する。terminal送信後のdeltaやtool結果は禁止する。
 
 ## 8. Research pipeline
 

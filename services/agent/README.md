@@ -30,6 +30,19 @@ status, and provider provenance. Candidates without identifiers stay explicitly
 `unverified`; a metadata-provider failure marks verifiable candidates `failed`. Retracted
 evidence is excluded from positive claims.
 
+### Deadline and cancellation behavior
+
+The production ADK `/run_sse` invocation has a hard deadline of 180 seconds. The
+`AGENT_TURN_DEADLINE_SECONDS` setting may lower that limit for local operation or tests,
+but validation rejects values above 180. A request to `POST /runs/{turn_id}/cancel`
+sets the cooperative cancellation event and directly cancels the active invocation task,
+including in-flight retrieval or synthesis awaits.
+
+Timeout and cancellation emit exactly one terminal event. Their safe run manifest and
+trace attributes contain only `finish_reason` and classified flags (`timeout` or
+`cancelled`); no partial answer, provider response, query, or tool result is emitted
+after the terminal transition.
+
 ## Internal API contract
 
 `POST /run_sse` accepts an ADK `RunAgentRequest`-compatible body:

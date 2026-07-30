@@ -182,6 +182,10 @@ prompt injection検体をsecurity testへ含める。
 - DOI / PMIDを持つ公開Evidenceは1 batchでEurope PMCへ照合し、検証状態、研究段階、
   撤回・訂正状態、取得元をEvidence provenanceへ保持する。
 - 未検証Evidenceは明示し、撤回済みEvidenceを肯定的なclaimへ使用しない。
+- ADK invocation全体へ最大180秒のhard deadlineを適用する。
+- deadlineまたはcancel時は進行中のprovider taskを中断し、部分回答やtool結果を送らない。
+- timeout/cancel後のterminal eventは1件に限定し、分類済みflagとfinish reasonだけを
+  manifest / traceへ記録する。
 - model / API version変更時はcontract testとevalを再実行する。
 
 ## 12. Traceとログ
