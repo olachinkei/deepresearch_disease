@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -96,6 +96,13 @@ class ResearchWorkflow:
         research_question: str | None,
         cancel_event: asyncio.Event,
         session_state: dict[str, Any] | None = None,
+        _evaluation_capture: (
+            Callable[
+                [tuple[Evidence, ...], tuple[Evidence, ...], ResearchResult],
+                None,
+            ]
+            | None
+        ) = None,
     ) -> AsyncIterator[WorkflowEvent]:
         state = session_state or await self._sessions.merge(
             user_id=user_id,
@@ -249,6 +256,7 @@ class ResearchWorkflow:
                 flags=sorted(budget.flags),
                 citation_count=sum(len(claim.evidence_ids) for claim in draft.claims),
                 source_count=len(sources),
+                context_ratio=context_ratio,
                 completed_at=datetime.now(UTC),
             )
             result = ResearchResult(
@@ -258,6 +266,8 @@ class ResearchWorkflow:
                 limitations=draft.limitations,
                 manifest=manifest,
             )
+            if _evaluation_capture is not None:
+                _evaluation_capture(tuple(evidence), tuple(packed), result)
             output_classification = classify_trace_output(
                 input_classification=input_classification,
                 has_internal_evidence=any(

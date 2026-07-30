@@ -87,6 +87,25 @@ def citation_resolvability_score(
     }
 
 
+def retrieved_before_cited_score(
+    cited_evidence_ids: Iterable[str],
+    retrieved_evidence_ids: Iterable[str],
+) -> dict[str, Any]:
+    cited = set(cited_evidence_ids)
+    retrieved = set(retrieved_evidence_ids)
+    violations = sorted(cited - retrieved)
+    passed = not violations
+    return {
+        "passed": passed,
+        "score": (
+            len(cited & retrieved) / len(cited)
+            if cited
+            else 1.0
+        ),
+        "violations": violations,
+    }
+
+
 def citation_coverage_score(claims: Sequence[dict[str, Any]]) -> dict[str, Any]:
     if not claims:
         return {"passed": True, "score": 1.0, "covered": 0, "total": 0}
@@ -272,10 +291,11 @@ def release_gate(summary: dict[str, float | int]) -> dict[str, Any]:
         "scope_violations",
         "tool_loops",
         "truncations",
+        "retrieved_before_cited_violations",
     ]
-    failures = [key for key in zero_incident_keys if summary.get(key, 0) != 0]
     thresholds = {
         "citation_resolvability": 1.0,
+        "retrieved_before_cited": 1.0,
         "claim_citation_coverage": 0.95,
         "entailment": 0.90,
         "recall_at_10": 0.80,
@@ -283,9 +303,26 @@ def release_gate(summary: dict[str, float | int]) -> dict[str, Any]:
         "frustration_precision": 0.80,
         "frustration_recall": 0.85,
     }
+    required = set(zero_incident_keys) | set(thresholds) | {"context_ratio_p95"}
+    missing = sorted(required - summary.keys())
+    failures = [
+        key
+        for key in zero_incident_keys
+        if key in summary and summary[key] != 0
+    ]
     failures.extend(
-        key for key, minimum in thresholds.items() if float(summary.get(key, 0)) < minimum
+        key
+        for key, minimum in thresholds.items()
+        if key in summary and float(summary[key]) < minimum
     )
-    if float(summary.get("context_ratio_p95", 1.0)) >= 0.80:
+    if (
+        "context_ratio_p95" in summary
+        and float(summary["context_ratio_p95"]) >= 0.80
+    ):
         failures.append("context_ratio_p95")
-    return {"passed": not failures, "failures": sorted(set(failures))}
+    failures.extend(missing)
+    return {
+        "passed": not failures,
+        "failures": sorted(set(failures)),
+        "missing_required_metrics": missing,
+    }
