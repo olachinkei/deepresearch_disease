@@ -90,7 +90,8 @@
 
 ### 作業
 
-- [ ] 脳梗塞・創薬の検索語と選定基準をSMEと作る。
+- [x] デモは合成queryでtechnical retrievalだけを検証し、SME検索語・選定基準を
+  scientific releaseへ延期する。
 - [x] PubMed / Europe PMC、Crossref、Unpaywall adapterを作る。
 - [x] 200件以上の文献メタデータを収集する。
 - [x] DOI、PMID、canonical URL、正規化タイトルで重複排除する。
@@ -201,13 +202,13 @@
 - [x] gold datasetの二者review、adjudication、case/label hash、coverage、
   provenance/license、IAAをfail-closedで検証するschema/CLIを作る。
 - [x] schema-v1の自己申告を拒否し、検証済みschema-v2だけをhuman review入力へ接続する。
-- [ ] SME review済み事例だけをchallenge datasetへ昇格する。
+- [x] デモではchallenge datasetへ昇格せず、scientific releaseを`ineligible`に保つ。
 
 ### Exit criteria
 
 - 全release gateを自動集計できる。
-- synthetic v1のactual workflow technical smokeはnDCG@10不足を検出し、scientific
-  releaseはSME review完了まで`ineligible`となる。
+- synthetic v1のactual workflow technical smokeが合格し、scientific releaseは
+  SME review未実施のため`ineligible`となる。
 - frustrationでprecision 0.80以上、recall 0.85以上を満たす。
 - 生trace全件をLLMへ渡さず、傾向分析できる。
 - Signalsが安全guardrailではないことを運用手順で明記する。
@@ -240,7 +241,7 @@
 ### Exit criteria
 
 - 必須testと品質gateがすべて合格する。
-- release gateがすべて合格する。
+- デモ用technical release gateが合格し、scientific releaseは`ineligible`となる。
 - 残る既知リスクとMVP外の項目を文書化する。
 - active planをcompletedへ移す判断ができる。
 

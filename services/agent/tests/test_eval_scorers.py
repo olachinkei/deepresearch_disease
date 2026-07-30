@@ -232,14 +232,17 @@ def test_threshold_boundaries_and_nearest_rank_p95_are_fixed() -> None:
 
 
 @pytest.mark.asyncio
-async def test_actual_workflow_evaluation_is_fail_closed_and_scientifically_ineligible() -> None:
+async def test_actual_workflow_evaluation_passes_technical_demo_only() -> None:
     summary = await evaluate_workflow_fixtures()
 
     assert not summary.missing_required_metrics
     assert summary.metrics["recall_at_10"].sample_count == 36
+    assert summary.metrics["recall_at_10"].value == 1.0
+    assert summary.metrics["ndcg_at_10"].value == 1.0
     assert summary.metrics["schema_validity"].sample_count > 24
     assert summary.metrics["multi_turn_retention"].sample_count == 18
     assert summary.metrics["retrieved_before_cited"].value == 1.0
-    assert summary.technical_smoke_status == GateStatus.FAILED
+    assert summary.technical_smoke_status == GateStatus.PASSED
     assert summary.scientific_release_status == GateStatus.INELIGIBLE
     assert "dataset_not_sme_reviewed" in summary.scientific_release_reasons
+    assert "technical_gate_failed" not in summary.scientific_release_reasons
