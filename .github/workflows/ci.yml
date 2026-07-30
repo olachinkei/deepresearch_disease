@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  repository-safety:
+    name: repository-safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Audit tracked paths and high-confidence secret signatures
+        run: ./scripts/audit-tracked-files.sh
+
+      - name: Scan full Git history for secrets
+        uses: gitleaks/gitleaks-action@v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AGENT_RUNTIME_MODE: mock
+      AGENT_ALLOW_TARGET_TO_EXA: "false"
+      AGENT_ALLOW_PUBLIC_CONTENT_TO_GEMINI: "false"
+      AGENT_ALLOW_INTERNAL_CONTENT_TO_GEMINI: "false"
+      AGENT_ALLOW_RESEARCH_HYPOTHESIS_TO_GEMINI: "false"
+      AGENT_TRACE_CONTENT_ENABLED: "false"
+      AGENT_TRACE_RESEARCH_HYPOTHESES_ENABLED: "false"
+      AGENT_INTERNAL_INGESTION_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.6.10"
+          enable-cache: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --frozen --extra dev
+        working-directory: services/agent
+
+      - name: TypeScript lint and import-cycle checks
+        run: pnpm lint
+      - name: TypeScript typecheck
+        run: pnpm typecheck
+      - name: TypeScript unit, contract, privacy, and integration tests
+        run: pnpm test
+      - name: TypeScript dead-code check
+        run: pnpm --filter @deepresearch/web knip
+      - name: TypeScript duplication check
+        run: pnpm --filter @deepresearch/web jscpd
+
+      - name: Python lint
+        run: uv run ruff check .
+        working-directory: services/agent
+      - name: Python typecheck
+        run: uv run mypy src
+        working-directory: services/agent
+      - name: Python unit, contract, privacy, and integration tests
+        run: uv run pytest
+        working-directory: services/agent
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AGENT_RUNTIME_MODE: mock
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          SESSION_SECRET: local-ci-cookie-secret-with-at-least-32-characters
+          AGENT_SERVICE_URL: http://127.0.0.1:65535

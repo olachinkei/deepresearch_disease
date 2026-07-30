@@ -1,0 +1,21 @@
+{
+  "name": "deepresearch-disease",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @deepresearch/web dev",
+    "build": "pnpm --filter @deepresearch/web build",
+    "test": "pnpm --filter @deepresearch/web test",
+    "test:e2e": "pnpm --filter @deepresearch/web test:e2e",
+    "lint": "pnpm --filter @deepresearch/web lint",
+    "typecheck": "pnpm --filter @deepresearch/web typecheck",
+    "quality": "pnpm --filter @deepresearch/web quality",
+    "agent:test": "cd services/agent && uv run pytest",
+    "agent:lint": "cd services/agent && uv run ruff check .",
+    "agent:typecheck": "cd services/agent && uv run mypy src",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm agent:lint && pnpm agent:typecheck && pnpm agent:test"
+  }
+}

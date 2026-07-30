@@ -1,0 +1,8 @@
+{
+  "threshold": 3,
+  "reporters": ["console"],
+  "ignore": ["**/*.test.ts", "**/*.spec.ts", "**/build/**", "**/.react-router/**"],
+  "minLines": 8,
+  "minTokens": 70,
+  "absolute": true
+}

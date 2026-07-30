@@ -1,0 +1,58 @@
+{
+  "name": "@deepresearch/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "react-router dev",
+    "build": "react-router build",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "oxlint --deny-warnings .",
+    "knip": "knip",
+    "jscpd": "jscpd app",
+    "quality": "pnpm lint && pnpm typecheck && pnpm knip && pnpm jscpd && pnpm test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "feedback:sync": "tsx scripts/sync-feedback.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/noto-sans-jp": "5.3.0",
+    "@libsql/client": "0.17.4",
+    "@react-router/node": "7.18.2",
+    "@react-router/serve": "7.18.2",
+    "drizzle-orm": "0.45.2",
+    "lucide-react": "1.27.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-markdown": "10.1.0",
+    "react-router": "7.18.2",
+    "zod": "4.4.3",
+    "isbot": "^5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0",
+    "@react-router/dev": "7.18.2",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "drizzle-kit": "0.31.10",
+    "happy-dom": "20.11.1",
+    "jscpd": "5.0.14",
+    "knip": "6.29.0",
+    "oxlint": "1.76.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.1",
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "4.1.10"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
+  },
+  "plugins": ["import"],
+  "rules": {
+    "import/no-cycle": "error",
+    "no-console": "warn",
+    "no-await-in-loop": "off"
+  },
+  "ignorePatterns": [
+    "build/**",
+    ".react-router/**",
+    "coverage/**",
+    "drizzle/**",
+    "playwright-report/**",
+    "test-results/**"
+  ]
+}

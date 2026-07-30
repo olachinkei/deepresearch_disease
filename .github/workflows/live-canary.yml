@@ -1,0 +1,68 @@
+name: Live canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      canary_case:
+        description: Public/synthetic test case; arbitrary or internal text is not accepted
+        required: true
+        type: choice
+        options:
+          - synthetic-ischemic-stroke-mmp9
+      confirm_public_synthetic_only:
+        description: Confirm that this run uses only the fixed public/synthetic payload
+        required: true
+        type: boolean
+
+concurrency:
+  group: live-canary
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    if: inputs.confirm_public_synthetic_only
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: live-canary
+    env:
+      AGENT_RUNTIME_MODE: live
+      AGENT_MODEL: gemini-3.6-flash
+      AGENT_HMAC_SECRET: synthetic-canary-hmac-secret-not-used-for-production
+      AGENT_ALLOW_TARGET_TO_EXA: "true"
+      AGENT_ALLOW_PUBLIC_CONTENT_TO_GEMINI: "true"
+      AGENT_ALLOW_INTERNAL_CONTENT_TO_GEMINI: "false"
+      AGENT_ALLOW_RESEARCH_HYPOTHESIS_TO_GEMINI: "false"
+      AGENT_TRACE_CONTENT_ENABLED: "false"
+      AGENT_TRACE_RESEARCH_HYPOTHESES_ENABLED: "false"
+      AGENT_FEEDBACK_COMMENT_TO_WANDB_ENABLED: "false"
+      AGENT_INTERNAL_INGESTION_ENABLED: "false"
+      ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS: "false"
+      OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: NO_CONTENT
+      ADK_TELEMETRY_IGNORE_RUN_CONFIG: "true"
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_HEADERS }}
+      OTEL_RESOURCE_ATTRIBUTES: ${{ vars.OTEL_RESOURCE_ATTRIBUTES }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.6.10"
+          enable-cache: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install locked agent dependencies
+        run: uv sync --frozen --extra dev
+        working-directory: services/agent
+
+      - name: Run fixed public/synthetic provider canary
+        run: uv run python scripts/run_live_canary.py
+        working-directory: services/agent

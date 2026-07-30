@@ -1,0 +1,49 @@
+# JavaScript
+node_modules/
+.react-router/
+build/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Python
+.venv/
+.canary/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.sqlite*
+*.db
+*.db-*
+*.pem
+*.key
+*.p12
+*.pfx
+*.pdf
+*.docx
+*.xlsx
+*.xls
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.log
+data/internal/
+data/corpus/
+data/raw/
+**/tool-responses/
+!data/corpus/.gitkeep
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/

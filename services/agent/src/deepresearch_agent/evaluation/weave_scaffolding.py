@@ -1,0 +1,58 @@
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
+
+from deepresearch_agent.evaluation.scorers import (
+    citation_coverage_score,
+    citation_resolvability_score,
+    disease_scope_score,
+    tool_policy_score,
+)
+
+
+def build_weave_evaluation(
+    *,
+    name: str,
+    rows: list[dict[str, Any]],
+    model: Callable[..., Any],
+) -> object:
+    """Create, but do not run, a versionable Weave Dataset/Evaluation."""
+
+    import weave
+
+    dataset = weave.Dataset(name=f"{name}-dataset", rows=rows)  # type: ignore[arg-type]
+
+    @weave.op(name="disease_scope")
+    def disease_scope_scorer(disease: str, output: dict[str, Any]) -> dict[str, Any]:
+        del output
+        return disease_scope_score(disease)
+
+    @weave.op(name="tool_policy")
+    def tool_policy_scorer(output: dict[str, Any]) -> dict[str, Any]:
+        manifest = output.get("manifest", {})
+        return tool_policy_score(
+            manifest.get("tool_counts", {}),
+            manifest.get("flags", []),
+        )
+
+    @weave.op(name="citation_quality")
+    def citation_scorer(output: dict[str, Any]) -> dict[str, Any]:
+        sources = output.get("sources", [])
+        result = citation_resolvability_score(
+            output.get("answer_markdown", ""),
+            [source.get("evidence_id", "") for source in sources],
+        )
+        coverage = citation_coverage_score(output.get("claims", []))
+        return {
+            "passed": result["passed"] and coverage["passed"],
+            "resolvability": result["score"],
+            "coverage": coverage["score"],
+        }
+
+    return weave.Evaluation(
+        name=name,
+        dataset=dataset,
+        scorers=[disease_scope_scorer, tool_policy_scorer, citation_scorer],
+        metadata={"fixture_status": "synthetic_unreviewed", "version": "v1"},
+    ), model
