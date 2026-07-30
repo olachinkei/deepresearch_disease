@@ -28,6 +28,8 @@
 - [x] 4件のADRを採択または修正する。
 - [ ] データ管理者、脳卒中SME、創薬SMEのreview ownerを決める。
 - [x] 社内PDF、Gemini、W&B、Exaそれぞれの送信可否を記録する。
+- [x] 機密featureの承認record schema、起動時validator、negative testを実装する。
+- [x] store別retention/deletion責任を必須化し、横断削除runbookを作る。
 - [ ] Gemini modelとprompt versionのpin方針を確定する。
 
 ### Exit criteria
@@ -251,6 +253,9 @@
 ## 13. 承認記録
 
 次の項目は未承認を既定とする。承認者、対象環境、データ分類、日付、有効期限を [SECURITY.md](../../SECURITY.md) に記録してから有効化する。
+
+承認はrepository外のversioned registryへ記録し、各機能のflagと有効recordが両方
+揃わない限りruntimeを起動しない。現在は担当者未指名のため、以下はすべてOFFを維持する。
 
 - [ ] 社内PDF ingestion
 - [ ] 社内excerptのGemini送信

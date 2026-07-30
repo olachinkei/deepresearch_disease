@@ -115,6 +115,12 @@ fail closedとする。
 
 未記入の項目は未承認として扱う。秘密情報や内部本文をこの記録へ貼り付けない。
 
+承認recordは [ADR-0005](adr/0005-sensitive-feature-approval-registry.md) の
+versioned JSON schemaに従う。機密feature flagを有効にしたprocessは
+`AGENT_SENSITIVE_APPROVAL_REGISTRY_PATH` を読み、機能、送信先、環境、data class、
+有効期間の完全一致を起動時に検証する。不一致や読込失敗では起動しない。承認者、
+目的、制約は通常ログやtraceへ出さず、approval IDと判定だけを記録する。
+
 ## 7. Identityとsession
 
 - 表示名は認証ではない。
@@ -273,6 +279,9 @@ MVPではproductionの保持期間を定義しない。ただし、実装は次�
 - 不要なrequest / response dumpを保存しない。
 
 production pilot前に、保持期間、削除責任者、backup、W&B側のretentionを別途決定する。
+機密pilotでは承認recordにstore別の保持日数、削除責任者、backup方針、削除確認方法を
+必須とし、[pilot runbook](runbooks/sensitive-data-pilot.md) の横断dry-runを完了する。
+担当者未指名またはvendor側削除確認ができない場合は機密featureを有効化しない。
 
 ## 17. Security test
 

@@ -7,6 +7,12 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from deepresearch_agent.governance.approvals import (
+    ApprovalDecision,
+    sensitive_requirements,
+    validate_sensitive_approvals,
+)
+
 
 class Settings(BaseSettings):
     """Process configuration with external-data gates defaulting to closed."""
@@ -28,6 +34,13 @@ class Settings(BaseSettings):
     prompt_version: str = "v1"
     corpus_version: str = "public-seed-20260730-c8457953"
     hmac_secret: SecretStr = SecretStr("local-development-only-change-me")
+    environment: Literal["local", "pilot"] = "local"
+    sensitive_approval_registry_path: Path | None = None
+    sensitive_approval_decisions: tuple[ApprovalDecision, ...] = Field(
+        default_factory=tuple,
+        exclude=True,
+        repr=False,
+    )
 
     allow_target_to_exa: bool = False
     allow_public_content_to_gemini: bool = False
@@ -103,6 +116,25 @@ class Settings(BaseSettings):
             raise ValueError(
                 "trace input fingerprints cannot be both public and synthetic"
             )
+        requirements = sensitive_requirements(
+            internal_ingestion_enabled=self.internal_ingestion_enabled,
+            allow_internal_content_to_gemini=self.allow_internal_content_to_gemini,
+            allow_research_hypothesis_to_gemini=(
+                self.allow_research_hypothesis_to_gemini
+            ),
+            allow_target_to_exa=self.allow_target_to_exa,
+            trace_input_content_enabled=self.trace_input_content_enabled,
+            trace_output_content_enabled=self.trace_output_content_enabled,
+            feedback_comment_to_wandb_enabled=(
+                self.feedback_comment_to_wandb_enabled
+            ),
+        )
+        decisions = validate_sensitive_approvals(
+            registry_path=self.sensitive_approval_registry_path,
+            environment=self.environment,
+            requirements=requirements,
+        )
+        object.__setattr__(self, "sensitive_approval_decisions", decisions)
         return self
 
     @property
