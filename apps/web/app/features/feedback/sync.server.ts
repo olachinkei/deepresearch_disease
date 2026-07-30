@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import type { AppDatabase } from "~/shared/database/client.server";
 
-import { FeedbackRepository } from "./repository.server";
+import {
+  feedbackIdempotencyKey,
+  FeedbackRepository,
+} from "./repository.server";
 
 const syncResponseSchema = z
   .object({
@@ -24,6 +27,7 @@ export class FeedbackSyncClient {
   ) {}
 
   async sync(record: FeedbackRecord) {
+    const idempotencyKey = feedbackIdempotencyKey(record);
     const response = await this.fetchImplementation(
       `${this.baseUrl.replace(/\/$/u, "")}/feedback/sync`,
       {
@@ -31,9 +35,10 @@ export class FeedbackSyncClient {
         headers: {
           "content-type": "application/json",
           accept: "application/json",
+          "idempotency-key": idempotencyKey,
         },
         body: JSON.stringify({
-          feedback_id: record.id,
+          feedback_id: idempotencyKey,
           turn_id: record.turnId,
           rating: record.vote,
           reason: record.reason ?? undefined,
@@ -65,16 +70,28 @@ export async function syncFeedbackQueue(
   const result = { synced: 0, pending: 0, failed: 0 };
 
   for (const record of records) {
-    await repository.markSyncing(record.id);
+    const claimed = await repository.claimForSync(
+      record.id,
+      record.revision,
+      options.now ?? new Date(),
+    );
+    if (!claimed) {
+      continue;
+    }
     const attempts = record.attempts + 1;
     try {
       const response = await client.sync(record);
       if (response.status === "synced") {
-        await repository.markSynced(record.id, response.feedback_id);
+        await repository.markSynced(
+          record.id,
+          record.revision,
+          response.feedback_id,
+        );
         result.synced += 1;
       } else {
         await repository.deferPending(
           record.id,
+          record.revision,
           attempts,
           options.now ?? new Date(),
         );
@@ -83,6 +100,7 @@ export async function syncFeedbackQueue(
     } catch (error) {
       await repository.markFailed(
         record.id,
+        record.revision,
         attempts,
         error instanceof Error ? error.message : "Unknown sync error.",
         options.now ?? new Date(),

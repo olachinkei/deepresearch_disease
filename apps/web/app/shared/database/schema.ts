@@ -111,6 +111,7 @@ export const feedbackQueue = sqliteTable(
     vote: text("vote", { enum: ["up", "down"] }).notNull(),
     reason: text("reason", { enum: FEEDBACK_REASONS }),
     comment: text("comment"),
+    revision: integer("revision").notNull().default(1),
     syncStatus: text("sync_status", { enum: FEEDBACK_SYNC_STATUSES })
       .notNull()
       .default("pending"),
@@ -125,7 +126,42 @@ export const feedbackQueue = sqliteTable(
   },
   (table) => [
     index("feedback_pending_idx").on(table.syncStatus, table.nextAttemptAt),
-    index("feedback_turn_idx").on(table.turnId),
+    uniqueIndex("feedback_turn_user_unique").on(table.turnId, table.userId),
+  ],
+);
+
+export const feedbackRevisions = sqliteTable(
+  "feedback_revisions",
+  {
+    id: text("id").primaryKey(),
+    feedbackId: text("feedback_id").notNull(),
+    turnId: text("turn_id")
+      .notNull()
+      .references(() => turns.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => localUsers.id, { onDelete: "cascade" }),
+    vote: text("vote", { enum: ["up", "down"] }).notNull(),
+    reason: text("reason", { enum: FEEDBACK_REASONS }),
+    comment: text("comment"),
+    revision: integer("revision").notNull(),
+    syncStatus: text("sync_status", { enum: FEEDBACK_SYNC_STATUSES }).notNull(),
+    attempts: integer("attempts").notNull(),
+    nextAttemptAt: text("next_attempt_at"),
+    lastError: text("last_error"),
+    weaveFeedbackId: text("weave_feedback_id"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+    archivedAt: text("archived_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("feedback_revisions_feedback_revision_unique").on(
+      table.feedbackId,
+      table.revision,
+    ),
+    index("feedback_revisions_turn_user_idx").on(table.turnId, table.userId),
   ],
 );
 

@@ -24,4 +24,6 @@ export type ActiveConversationView = {
     researchQuestion: string | null;
   };
   messages: TranscriptView[];
+  feedbackByTurn: Record<string, FeedbackView>;
 };
+import type { FeedbackView } from "~/features/feedback/schema";
