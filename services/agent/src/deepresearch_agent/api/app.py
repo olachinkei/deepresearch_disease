@@ -33,6 +33,9 @@ from deepresearch_agent.infrastructure.feedback import (
     FeedbackSynchronizer,
     WeaveFeedbackBackend,
 )
+from deepresearch_agent.infrastructure.publication_metadata import (
+    EuropePmcMetadataVerifier,
+)
 from deepresearch_agent.infrastructure.sessions import AdkSessionStateStore
 from deepresearch_agent.observability.otel import configure_otel
 from deepresearch_agent.settings import Settings, get_settings
@@ -72,12 +75,14 @@ def build_workflow(settings: Settings) -> ResearchWorkflow:
         if settings.live_exa_enabled and settings.exa_api_key
         else None
     )
+    metadata_verifier = EuropePmcMetadataVerifier() if exa else None
     return ResearchWorkflow(
         settings=settings,
         corpus=corpus,
         embeddings=HashEmbeddingProvider(),
         sessions=AdkSessionStateStore(settings.session_database_path),
         exa=exa,
+        metadata_verifier=metadata_verifier,
     )
 
 

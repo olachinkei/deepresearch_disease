@@ -16,6 +16,20 @@ curl http://127.0.0.1:8001/healthz
 the same SSE contract as a live run. Live Exa or Gemini calls require both a key and
 the corresponding explicit data-policy flag; no provider is silently enabled.
 
+### Exa failure and metadata behavior
+
+Live Exa search has a hard two-call budget per turn. Retryable timeout, rate-limit,
+transport, and 5xx failures are retried only while that budget remains; auth, request,
+and schema failures are not retried. Provider payloads and queries are never copied to
+SSE, ordinary logs, traces, or user-visible errors. If Exa remains unavailable, the turn
+completes with internal evidence and a sanitized partial-search limitation.
+
+DOI/PMID-bearing public candidates are deduplicated and verified through one Europe PMC
+metadata batch. Evidence retains verification status, stage, retraction/correction
+status, and provider provenance. Candidates without identifiers stay explicitly
+`unverified`; a metadata-provider failure marks verifiable candidates `failed`. Retracted
+evidence is excluded from positive claims.
+
 ## Internal API contract
 
 `POST /run_sse` accepts an ADK `RunAgentRequest`-compatible body:
