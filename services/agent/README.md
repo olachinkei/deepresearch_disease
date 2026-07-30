@@ -20,6 +20,10 @@ Sensitive-data flags additionally require an exact, unexpired approval record at
 records stop configuration before a provider or internal ingestion path is built.
 Schema v2 also fail-closes unless named role IDs, retention for every affected store,
 and verified public/synthetic pilot deletion evidence for every affected store agree.
+The default `AGENT_DEPLOYMENT_PROFILE=public_synthetic_demo` rejects every
+non-public/synthetic data path even when such a registry is present. Exact
+server-classified public/synthetic trace fingerprints remain allowed. Only a separately
+governed deployment may select `approved_sensitive_pilot`.
 
 ### Exa failure and metadata behavior
 

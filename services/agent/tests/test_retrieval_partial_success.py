@@ -63,6 +63,7 @@ async def test_exa_failure_retries_finitely_and_returns_internal_partial_success
 ) -> None:
     settings = Settings(
         runtime_mode="live",
+        deployment_profile="approved_sensitive_pilot",
         allow_target_to_exa=True,
         EXA_API_KEY="test-exa-key",
         exa_retry_backoff_seconds=0,

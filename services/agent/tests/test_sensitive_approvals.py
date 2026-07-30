@@ -14,8 +14,51 @@ def test_sensitive_flags_are_closed_without_registry() -> None:
     settings = Settings(_env_file=None)
     assert settings.sensitive_approval_decisions == ()
 
-    with pytest.raises(ValueError, match="registry_missing"):
+    with pytest.raises(ValueError, match="demo_profile_forbids_sensitive_features"):
         Settings(_env_file=None, allow_target_to_exa=True)
+
+    with pytest.raises(ValueError, match="registry_missing"):
+        Settings(
+            _env_file=None,
+            deployment_profile="approved_sensitive_pilot",
+            allow_target_to_exa=True,
+        )
+
+
+@pytest.mark.parametrize(
+    "enabled_flag",
+    [
+        "internal_ingestion_enabled",
+        "allow_internal_content_to_gemini",
+        "allow_research_hypothesis_to_gemini",
+        "allow_target_to_exa",
+        "feedback_comment_to_wandb_enabled",
+    ],
+)
+def test_demo_profile_rejects_every_sensitive_feature_even_with_valid_registry(
+    approval_registry_factory: Callable[..., Path],
+    enabled_flag: str,
+) -> None:
+    registry = approval_registry_factory()
+
+    with pytest.raises(ValueError, match="demo_profile_forbids_sensitive_features"):
+        Settings(
+            _env_file=None,
+            sensitive_approval_registry_path=registry,
+            **{enabled_flag: True},
+        )
+
+
+def test_demo_profile_allows_only_classified_public_or_synthetic_trace_content() -> None:
+    settings = Settings(
+        _env_file=None,
+        trace_input_content_enabled=True,
+        trace_output_content_enabled=True,
+    )
+
+    assert settings.sensitive_approval_decisions == ()
+    assert settings.trace_public_input_fingerprints == frozenset()
+    assert settings.trace_synthetic_input_fingerprints == frozenset()
 
 
 @pytest.mark.parametrize(
@@ -61,6 +104,7 @@ def test_sensitive_approval_rejects_scope_and_date_mismatch(
     with pytest.raises(ValueError, match=expected_reason):
         Settings(
             _env_file=None,
+            deployment_profile="approved_sensitive_pilot",
             allow_target_to_exa=True,
             sensitive_approval_registry_path=registry,
         )
@@ -73,6 +117,7 @@ def test_sensitive_approval_accepts_exact_scope_and_logs_only_safe_fields(
     registry = approval_registry_factory()
     settings = Settings(
         _env_file=None,
+        deployment_profile="approved_sensitive_pilot",
         allow_target_to_exa=True,
         sensitive_approval_registry_path=registry,
     )
@@ -102,6 +147,7 @@ def test_each_enabled_sensitive_feature_requires_its_own_record(
     ):
         Settings(
             _env_file=None,
+            deployment_profile="approved_sensitive_pilot",
             allow_target_to_exa=True,
             allow_internal_content_to_gemini=True,
             sensitive_approval_registry_path=exa_only,

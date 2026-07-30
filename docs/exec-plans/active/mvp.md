@@ -26,12 +26,14 @@
 
 - [x] `instruction.md` とMVP product specをレビューする。
 - [x] 4件のADRを採択または修正する。
-- [ ] データ管理者、脳卒中SME、創薬SMEのreview ownerを決める。
+- [x] デモを公開・合成データ限定とし、機密pilotの担当者指名をMVP対象外にする。
 - [x] 社内PDF、Gemini、W&B、Exaそれぞれの送信可否を記録する。
 - [x] 機密featureの承認record schema、起動時validator、negative testを実装する。
 - [x] store別retention/deletion責任を必須化し、横断削除runbookを作る。
 - [x] schema v2で全RACI担当ID、全対象store、公開・合成pilotと削除dry-run証跡を
   起動条件としてfail closedにする。
+- [x] `public_synthetic_demo` profileでは承認recordの有無にかかわらず機密データ
+  経路を起動拒否し、完全一致した公開・合成traceだけを許可する。
 - [ ] Gemini modelとprompt versionのpin方針を確定する。
 
 ### Exit criteria
@@ -259,9 +261,13 @@
 
 次の項目は未承認を既定とする。承認者、対象環境、データ分類、日付、有効期限を [SECURITY.md](../../SECURITY.md) に記録してから有効化する。
 
-承認はrepository外のschema v2 registryへ記録し、各機能のflag、有効record、
+デモは `public_synthetic_demo` profileを使用し、以下の機密機能を永続的にOFFとする。
+担当者指名、機密pilot、承認recordはデモの対象外である。
+
+将来の別deploymentで有効化する場合、承認はrepository外のschema v2 registryへ
+記録し、各機能のflag、有効record、
 全RACI担当ID、全対象storeのretention、公開・合成pilotと削除dry-run証跡がすべて
-揃わない限りruntimeを起動しない。現在は担当者未指名のため、以下はすべてOFFを維持する。
+揃わない限りruntimeを起動しない。
 
 - [ ] 社内PDF ingestion
 - [ ] 社内excerptのGemini送信
