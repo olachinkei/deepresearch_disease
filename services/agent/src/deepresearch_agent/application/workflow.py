@@ -27,11 +27,16 @@ from deepresearch_agent.domain.models import (
     RunManifest,
     SourceKind,
     SourceReference,
+    VerificationStatus,
     WorkflowEvent,
 )
 from deepresearch_agent.infrastructure.corpus import CorpusRepository
 from deepresearch_agent.infrastructure.embeddings import EmbeddingProvider
-from deepresearch_agent.infrastructure.exa import ExaSearchClient
+from deepresearch_agent.infrastructure.exa import ExaAdapterError, ExaSearchClient
+from deepresearch_agent.infrastructure.publication_metadata import (
+    MetadataVerificationError,
+    PublicationMetadataVerifier,
+)
 from deepresearch_agent.infrastructure.sessions import AdkSessionStateStore
 from deepresearch_agent.observability.otel import (
     TraceMetadata,
@@ -54,6 +59,7 @@ class ResearchWorkflow:
         embeddings: EmbeddingProvider,
         sessions: AdkSessionStateStore,
         exa: ExaSearchClient | None = None,
+        metadata_verifier: PublicationMetadataVerifier | None = None,
         deterministic_synthesizer: Synthesizer | None = None,
     ) -> None:
         self._settings = settings
@@ -61,6 +67,7 @@ class ResearchWorkflow:
         self._embeddings = embeddings
         self._sessions = sessions
         self._exa = exa
+        self._metadata_verifier = metadata_verifier
         self._deterministic_synthesizer = (
             deterministic_synthesizer or DeterministicSynthesizer()
         )
@@ -69,6 +76,8 @@ class ResearchWorkflow:
     async def close(self) -> None:
         if self._exa:
             await self._exa.close()
+        if self._metadata_verifier:
+            await self._metadata_verifier.close()
 
     @property
     def corpus_document_count(self) -> int:
@@ -228,6 +237,7 @@ class ResearchWorkflow:
                 )
                 sources = []
 
+            draft = self._apply_retrieval_limitations(draft, budget)
             manifest = RunManifest(
                 turn_id=turn_id,
                 conversation_id=conversation_id,
@@ -292,19 +302,23 @@ class ResearchWorkflow:
         known_documents: set[str] = set()
         for query in build_search_queries(normalized):
             self._raise_if_cancelled(cancel_event)
-            tasks: list[asyncio.Task[list[Evidence]]] = []
             budget.consume(ToolKind.INTERNAL_SEARCH, {"query": query, "limit": 10})
-            tasks.append(
-                asyncio.create_task(self._search_internal(query=query, limit=10))
+            internal_task = asyncio.create_task(
+                self._search_internal(query=query, limit=10)
             )
+            exa_task: asyncio.Task[list[Evidence]] | None = None
             if self._exa and self._settings.live_exa_enabled:
-                budget.consume(ToolKind.EXA_SEARCH, {"query": query, "num_results": 10})
-                tasks.append(
-                    asyncio.create_task(self._search_exa(query=query, num_results=10))
+                exa_task = asyncio.create_task(
+                    self._search_exa_with_retry(
+                        query=query,
+                        num_results=10,
+                        budget=budget,
+                        cancel_event=cancel_event,
+                    )
                 )
-            round_evidence: list[Evidence] = []
-            for result in await asyncio.gather(*tasks):
-                round_evidence.extend(result)
+            round_evidence = await internal_task
+            if exa_task:
+                round_evidence.extend(await exa_task)
             if normalized.target_molecule:
                 round_evidence = [
                     item
@@ -322,6 +336,10 @@ class ResearchWorkflow:
             except BudgetExceeded:
                 break
         deduped = deduplicate_evidence(all_evidence)
+        deduped = await self._verify_publication_metadata(
+            evidence=deduped,
+            budget=budget,
+        )
         return [
             item.model_copy(update={"id": f"E{index}"})
             for index, item in enumerate(deduped, 1)
@@ -356,6 +374,81 @@ class ResearchWorkflow:
                 }
             )
             return await self._exa.search_publications(query, num_results=num_results)
+
+    async def _search_exa_with_retry(
+        self,
+        *,
+        query: str,
+        num_results: int,
+        budget: ResearchBudget,
+        cancel_event: asyncio.Event,
+    ) -> list[Evidence]:
+        for attempt in range(2):
+            self._raise_if_cancelled(cancel_event)
+            try:
+                budget.consume(
+                    ToolKind.EXA_SEARCH,
+                    {"query": query, "num_results": num_results},
+                )
+            except BudgetExceeded:
+                budget.flags.add("exa_budget_exhausted")
+                return []
+            try:
+                return await self._search_exa(
+                    query=query,
+                    num_results=num_results,
+                )
+            except ExaAdapterError as exc:
+                budget.flags.add("exa_partial_failure")
+                budget.flags.add(f"exa_{exc.kind.value}")
+                if not exc.retryable or attempt == 1:
+                    return []
+                await asyncio.sleep(
+                    self._settings.exa_retry_backoff_seconds * (2**attempt)
+                )
+            except Exception:
+                budget.flags.add("exa_partial_failure")
+                budget.flags.add("exa_unexpected")
+                return []
+        return []
+
+    async def _verify_publication_metadata(
+        self,
+        *,
+        evidence: list[Evidence],
+        budget: ResearchBudget,
+    ) -> list[Evidence]:
+        exa_evidence = [item for item in evidence if "exa:search" in item.provenance]
+        verifiable = [item for item in exa_evidence if item.doi or item.pmid]
+        if not exa_evidence:
+            return evidence
+        if not verifiable:
+            budget.flags.add("metadata_unverified")
+            return evidence
+        if self._metadata_verifier is None:
+            budget.flags.add("metadata_unverified")
+            return evidence
+        try:
+            budget.consume(
+                ToolKind.METADATA,
+                {
+                    "evidence_count": len(verifiable),
+                    "provider": "europe_pmc",
+                },
+            )
+            verified_public = await self._metadata_verifier.verify(exa_evidence)
+        except (BudgetExceeded, MetadataVerificationError):
+            budget.flags.add("metadata_verification_failed")
+            return [
+                item.model_copy(
+                    update={"verification_status": VerificationStatus.FAILED}
+                )
+                if "exa:search" in item.provenance and (item.doi or item.pmid)
+                else item
+                for item in evidence
+            ]
+        verified_by_id = {item.id: item for item in verified_public}
+        return [verified_by_id.get(item.id, item) for item in evidence]
 
     @staticmethod
     def _pack_evidence(evidence: list[Evidence], budget: ResearchBudget) -> list[Evidence]:
@@ -411,10 +504,47 @@ class ResearchWorkflow:
                 url=item.canonical_url,
                 doi=item.doi,
                 pmid=item.pmid,
+                evidence_stage=item.evidence_stage,
+                verification_status=item.verification_status,
+                publication_status=item.publication_status,
             )
             for item in evidence
             if item.id in evidence_ids
         ]
+
+    @staticmethod
+    def _apply_retrieval_limitations(
+        draft: SynthesisDraft,
+        budget: ResearchBudget,
+    ) -> SynthesisDraft:
+        messages: list[str] = []
+        limitations = list(draft.limitations)
+        if "exa_partial_failure" in budget.flags:
+            messages.append(
+                "外部文献検索は一部失敗したため、取得済みの根拠のみで回答しました。"
+            )
+            limitations.append("External publication search partially failed.")
+        if "metadata_verification_failed" in budget.flags:
+            messages.append(
+                "公開文献の書誌・撤回情報を検証できず、該当根拠を未検証として扱いました。"
+            )
+            limitations.append("Publication metadata verification failed.")
+        elif "metadata_unverified" in budget.flags:
+            messages.append(
+                "識別子または検証サービスがない公開文献は未検証として表示しています。"
+            )
+            limitations.append("Some publication metadata remains unverified.")
+        if not messages:
+            return draft
+        return draft.model_copy(
+            update={
+                "answer_markdown": (
+                    f"{draft.answer_markdown}\n\n## 検索・検証上の追加制約\n\n"
+                    + "\n".join(f"- {message}" for message in messages)
+                ),
+                "limitations": limitations,
+            }
+        )
 
     @staticmethod
     def _raise_if_cancelled(cancel_event: asyncio.Event) -> None:

@@ -271,8 +271,9 @@ deprecatedな `context` とExa生成summaryを根拠に使用しない。取得�
 2. Research Planner
 3. internal retrievalとExa retrievalの並列実行
 4. Evidence Deduper
-5. Synthesis
-6. Citation Verifier
+5. 公開Evidenceのmetadata batch検証
+6. Synthesis
+7. Citation Verifier
 
 Citation Verifierが失敗した場合は1回だけ修復する。修復後も裏付けられないclaimは回答から除外する。
 

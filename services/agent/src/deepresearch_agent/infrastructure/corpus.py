@@ -8,7 +8,14 @@ from collections.abc import Iterable, Sequence
 from contextlib import closing
 from pathlib import Path
 
-from deepresearch_agent.domain.models import Chunk, Document, Evidence
+from deepresearch_agent.domain.models import (
+    Chunk,
+    Document,
+    Evidence,
+    PublicationStatus,
+    SourceKind,
+    VerificationStatus,
+)
 from deepresearch_agent.infrastructure.embeddings import cosine_similarity
 
 _FTS_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
@@ -228,6 +235,23 @@ class CorpusRepository:
                     section=row["section"],
                     score=combined[chunk_id],
                     retracted=document.retracted,
+                    verification_status=(
+                        VerificationStatus.VERIFIED
+                        if document.source_kind == SourceKind.PUBLIC
+                        and "europe_pmc" in document.provenance
+                        else VerificationStatus.UNVERIFIED
+                    ),
+                    publication_status=(
+                        PublicationStatus.RETRACTED
+                        if document.retracted
+                        else (
+                            PublicationStatus.CURRENT
+                            if document.source_kind == SourceKind.PUBLIC
+                            and "europe_pmc" in document.provenance
+                            else PublicationStatus.UNKNOWN
+                        )
+                    ),
+                    provenance=document.provenance,
                 )
             )
         return result

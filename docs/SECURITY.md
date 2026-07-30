@@ -176,6 +176,12 @@ prompt injection検体をsecurity testへ含める。
 - 同一queryの過剰送信をhard budgetで止める。
 - 外部API responseを信頼せず、schema validationする。
 - 外部API errorのpayloadをブラウザや通常ログへ転送しない。
+- Exaのtimeout、rate limit、認証、5xx、schema driftは本文を捨てて安定した分類値へ変換する。
+- retryはExa call budget内の最大2回とし、同一queryを無限に再送しない。
+- Exa障害時は内部retrievalを破棄せず、外部検索が一部失敗したことだけを回答へ表示する。
+- DOI / PMIDを持つ公開Evidenceは1 batchでEurope PMCへ照合し、検証状態、研究段階、
+  撤回・訂正状態、取得元をEvidence provenanceへ保持する。
+- 未検証Evidenceは明示し、撤回済みEvidenceを肯定的なclaimへ使用しない。
 - model / API version変更時はcontract testとevalを再実行する。
 
 ## 12. Traceとログ

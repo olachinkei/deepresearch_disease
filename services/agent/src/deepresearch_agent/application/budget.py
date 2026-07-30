@@ -44,17 +44,17 @@ class ResearchBudget:
     def consume(self, tool: ToolKind, arguments: dict[str, Any]) -> None:
         self.check_time()
         count = self.counts.get(tool, 0) + 1
-        self.counts[tool] = count
         if count > self.limits[tool]:
             self.flags.add("search_budget_exceeded")
             raise BudgetExceeded(f"{tool.value} call budget exceeded")
 
         fingerprint = self._fingerprint(tool, arguments)
         query_count = self.query_counts.get(fingerprint, 0) + 1
-        self.query_counts[fingerprint] = query_count
         if query_count >= 3:
             self.flags.add("duplicate_query_loop")
             raise BudgetExceeded("same tool arguments attempted three times")
+        self.counts[tool] = count
+        self.query_counts[fingerprint] = query_count
 
     def record_progress(self, new_source_count: int) -> None:
         self.consecutive_no_progress = (

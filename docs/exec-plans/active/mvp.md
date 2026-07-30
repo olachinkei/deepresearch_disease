@@ -112,8 +112,9 @@
 - [x] `/search`、`type=auto`、`category=publication`、`numResults=10` を実装する。
 - [x] extractive highlightsだけをEvidence候補に使う。
 - [x] deprecated `context` と生成summaryを拒否する。
-- [ ] timeout、rate limit、schema driftを分類する。
-- [ ] metadata検証をbatch化する。
+- [x] timeout、rate limit、認証、5xx、schema driftを安定した内部errorへ分類する。
+- [x] Exa call budget内の有限retryと内部retrievalによる部分成功を実装する。
+- [x] DOI / PMID metadata検証を1 batchへまとめ、検証・研究段階・撤回訂正状態を保持する。
 - [x] 標的仮説送信のapproval flagを実装する。
 - [x] request / response contract testを作る。
 
@@ -122,6 +123,7 @@
 - 未承認の機密入力をExaへ送らない。
 - Exa summaryをcitation根拠として採択しない。
 - 外部error時も内部retrievalだけで安全に終了できる。
+- 未検証sourceを明示し、撤回sourceを肯定的根拠として使用しない。
 
 ## 8. Milestone 5: ADK research workflow
 

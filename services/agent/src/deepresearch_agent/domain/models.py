@@ -37,6 +37,20 @@ class EvidenceStage(StrEnum):
     UNKNOWN = "unknown"
 
 
+class VerificationStatus(StrEnum):
+    UNVERIFIED = "unverified"
+    VERIFIED = "verified"
+    NOT_FOUND = "not_found"
+    FAILED = "failed"
+
+
+class PublicationStatus(StrEnum):
+    CURRENT = "current"
+    CORRECTED = "corrected"
+    RETRACTED = "retracted"
+    UNKNOWN = "unknown"
+
+
 class Document(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -106,6 +120,9 @@ class Evidence(BaseModel):
     support_level: SupportLevel = SupportLevel.UNKNOWN
     evidence_stage: EvidenceStage = EvidenceStage.UNKNOWN
     retracted: bool = False
+    verification_status: VerificationStatus = VerificationStatus.UNVERIFIED
+    publication_status: PublicationStatus = PublicationStatus.UNKNOWN
+    provenance: list[str] = Field(default_factory=list)
 
 
 class ResearchInput(BaseModel):
@@ -135,6 +152,9 @@ class SourceReference(BaseModel):
     url: HttpUrl | None = None
     doi: str | None = None
     pmid: str | None = None
+    evidence_stage: EvidenceStage = EvidenceStage.UNKNOWN
+    verification_status: VerificationStatus = VerificationStatus.UNVERIFIED
+    publication_status: PublicationStatus = PublicationStatus.UNKNOWN
 
 
 class RunManifest(BaseModel):
