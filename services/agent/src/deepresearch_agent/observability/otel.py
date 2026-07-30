@@ -26,7 +26,9 @@ _SAFE_ATTRIBUTE_KEYS = frozenset(
         "app.turn_id",
         "app.conversation_id",
         "app.agent_version",
+        "app.model_id",
         "app.prompt_version",
+        "app.prompt_sha256",
         "app.corpus_version",
         "app.tool_count",
         "app.duplicate_query_count",
@@ -96,7 +98,9 @@ class TraceMetadata:
     turn_id: str
     conversation_id: str
     agent_version: str
+    model_id: str
     prompt_version: str
+    prompt_sha256: str
     corpus_version: str
 
     def attributes(self) -> dict[str, str]:
@@ -105,7 +109,9 @@ class TraceMetadata:
             "app.turn_id": self.turn_id,
             "app.conversation_id": self.conversation_id,
             "app.agent_version": self.agent_version,
+            "app.model_id": self.model_id,
             "app.prompt_version": self.prompt_version,
+            "app.prompt_sha256": self.prompt_sha256,
             "app.corpus_version": self.corpus_version,
             "gen_ai.operation.name": "invoke_agent",
             "gen_ai.agent.name": "deepresearch_agent",

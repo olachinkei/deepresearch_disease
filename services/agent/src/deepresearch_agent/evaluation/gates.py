@@ -19,6 +19,7 @@ class EvaluationVersions(BaseModel):
     agent: str
     model: str
     prompt: str
+    prompt_sha256: str
     corpus: str
     embedding: str
     dataset: str

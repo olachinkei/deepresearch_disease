@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import sys
-from pathlib import Path
 
-import httpx
-
-from deepresearch_agent.api.app import create_adk_app
+from deepresearch_agent.application.synthesis import AdkSynthesizer
+from deepresearch_agent.domain.models import (
+    Evidence,
+    EvidenceStage,
+    ResearchInput,
+    SourceKind,
+    VerificationStatus,
+)
 from deepresearch_agent.settings import Settings
 
 
 def live_settings() -> Settings:
-    settings = Settings()
-    runtime_dir = Path(".canary")
-    runtime_dir.mkdir(exist_ok=True)
-    settings.database_path = runtime_dir / "corpus.sqlite"
-    settings.session_database_path = runtime_dir / "sessions.sqlite"
-    return settings
+    return Settings()
 
 
 async def main() -> int:
@@ -30,60 +28,55 @@ async def main() -> int:
     if not settings.live_gemini_enabled:
         print("live canary refused: GOOGLE_API_KEY is not configured", file=sys.stderr)
         return 2
+    if not settings.allow_public_content_to_gemini:
+        print(
+            "live canary refused: public/synthetic Gemini sending is disabled",
+            file=sys.stderr,
+        )
+        return 2
 
-    payload = {
-        "app_name": "deepresearch_agent",
-        "user_id": "synthetic-canary-user",
-        "session_id": "synthetic-canary-conversation",
-        "new_message": {
-            "role": "user",
-            "parts": [
-                {
-                    "text": (
-                        "Using public evidence only, assess MMP9 inhibition as a "
-                        "research hypothesis for ischemic stroke."
-                    )
-                }
-            ],
+    synthesizer = AdkSynthesizer(model=settings.model)
+    draft = await synthesizer.synthesize(
+        research_input=ResearchInput(
+            research_question=(
+                "Summarize the supplied synthetic evidence for an ischemic-stroke "
+                "drug-discovery demonstration."
+            )
+        ),
+        evidence=[
+            Evidence(
+                id="E-SYNTHETIC-CANARY-1",
+                document_id="synthetic-canary-document",
+                source_kind=SourceKind.PUBLIC,
+                title="Synthetic ischemic-stroke canary evidence",
+                excerpt=(
+                    "This synthetic excerpt verifies structured generation only and "
+                    "does not assert a biomedical finding."
+                ),
+                evidence_stage=EvidenceStage.UNKNOWN,
+                verification_status=VerificationStatus.VERIFIED,
+                provenance=["code-owned:live-canary"],
+            )
+        ],
+        safe_trace_metadata={
+            "app.turn_id": "synthetic-canary-turn",
+            "app.conversation_id": "synthetic-canary-conversation",
+            "app.model_id": settings.model,
+            "app.prompt_version": settings.prompt_version,
+            "app.prompt_sha256": settings.prompt_sha256,
+            "app.input_data_classification": "synthetic",
+            "app.output_data_classification": "synthetic",
         },
-        "streaming": True,
-        "custom_metadata": {
-            "turn_id": "synthetic-canary-turn",
-            "conversation_id": "synthetic-canary-conversation",
-            "target_molecule": "MMP9",
-            "mechanism": "inhibition",
-            "disease": "ischemic stroke",
-        },
-    }
-
-    app = create_adk_app(settings=settings)
-    async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app),
-        base_url="http://canary.test",
-        timeout=180,
-    ) as client:
-        response = await client.post("/run_sse", json=payload)
-
-    if response.status_code != 200:
-        print(f"live canary failed with HTTP {response.status_code}", file=sys.stderr)
+    )
+    if not draft.answer_markdown.strip():
+        print("live canary failed with an empty structured answer", file=sys.stderr)
         return 1
 
-    kinds: list[str] = []
-    for line in response.text.splitlines():
-        if not line.startswith("data: "):
-            continue
-        event = json.loads(line.removeprefix("data: "))
-        metadata = event.get("customMetadata", {})
-        kind = metadata.get("kind")
-        if isinstance(kind, str):
-            kinds.append(kind)
-
-    if not kinds or kinds[-1] != "completed":
-        terminal = kinds[-1] if kinds else "missing"
-        print(f"live canary failed with terminal event: {terminal}", file=sys.stderr)
-        return 1
-
-    print("live canary passed with a completed terminal event")
+    print(
+        "live canary passed with structured output for "
+        f"{settings.model} prompt {settings.prompt_version} "
+        f"({settings.prompt_sha256[:12]})"
+    )
     return 0
 
 

@@ -34,7 +34,7 @@
   起動条件としてfail closedにする。
 - [x] `public_synthetic_demo` profileでは承認recordの有無にかかわらず機密データ
   経路を起動拒否し、完全一致した公開・合成traceだけを許可する。
-- [ ] Gemini modelとprompt versionのpin方針を確定する。
+- [x] Gemini modelとprompt version/hashのpin、canary、rollback方針を確定する。
 
 ### Exit criteria
 

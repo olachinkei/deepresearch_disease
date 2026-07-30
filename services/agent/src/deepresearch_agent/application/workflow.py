@@ -149,7 +149,9 @@ class ResearchWorkflow:
             turn_id=turn_id,
             conversation_id=conversation_id,
             agent_version=__version__,
+            model_id=self._settings.model,
             prompt_version=self._settings.prompt_version,
+            prompt_sha256=self._settings.prompt_sha256,
             corpus_version=self._settings.corpus_version,
         )
         tracer = trace.get_tracer(__name__)
@@ -249,7 +251,9 @@ class ResearchWorkflow:
                 turn_id=turn_id,
                 conversation_id=conversation_id,
                 agent_version=__version__,
+                model_id=self._settings.model,
                 prompt_version=self._settings.prompt_version,
+                prompt_sha256=self._settings.prompt_sha256,
                 corpus_version=self._settings.corpus_version,
                 runtime_mode=self._settings.runtime_mode,
                 tool_counts={kind.value: count for kind, count in budget.counts.items()},

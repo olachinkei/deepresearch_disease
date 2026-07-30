@@ -303,7 +303,9 @@ def create_adk_app(
             registry,
             deadline_seconds=configured.turn_deadline_seconds,
             runtime_mode=configured.runtime_mode,
+            model_id=configured.model,
             prompt_version=configured.prompt_version,
+            prompt_sha256=configured.prompt_sha256,
             corpus_version=configured.corpus_version,
         ),
         session_service_uri=(

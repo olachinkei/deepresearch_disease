@@ -13,6 +13,11 @@ from deepresearch_agent.governance.approvals import (
     sensitive_requirements,
     validate_sensitive_approvals,
 )
+from deepresearch_agent.model_contract import (
+    GENERATION_MODEL_ID,
+    SYNTHESIS_PROMPT_SHA256,
+    SYNTHESIS_PROMPT_VERSION,
+)
 
 
 class Settings(BaseSettings):
@@ -31,8 +36,9 @@ class Settings(BaseSettings):
     runtime_mode: Literal["mock", "live"] = "mock"
     database_path: Path = Path("data/corpus.sqlite")
     session_database_path: Path = Path("data/sessions.sqlite")
-    model: str = "gemini-3.6-flash"
-    prompt_version: str = "v1"
+    model: Literal["gemini-3.6-flash"] = GENERATION_MODEL_ID
+    prompt_version: Literal["1.0.0"] = SYNTHESIS_PROMPT_VERSION
+    prompt_sha256: str = SYNTHESIS_PROMPT_SHA256
     corpus_version: str = "public-seed-20260730-c8457953"
     hmac_secret: SecretStr = SecretStr("local-development-only-change-me")
     environment: Literal["local", "pilot"] = "local"
@@ -82,6 +88,13 @@ class Settings(BaseSettings):
     def validate_hmac_secret(cls, value: SecretStr) -> SecretStr:
         if len(value.get_secret_value()) < 24:
             raise ValueError("AGENT_HMAC_SECRET must contain at least 24 characters")
+        return value
+
+    @field_validator("prompt_sha256")
+    @classmethod
+    def validate_prompt_sha256(cls, value: str) -> str:
+        if value != SYNTHESIS_PROMPT_SHA256:
+            raise ValueError("AGENT_PROMPT_SHA256 does not match the pinned prompt")
         return value
 
     @field_validator(

@@ -164,6 +164,7 @@ def _versions() -> EvaluationVersions:
         agent="test-agent",
         model="test-model",
         prompt="test-prompt",
+        prompt_sha256="0" * 64,
         corpus="test-corpus",
         embedding="test-embedding",
         dataset="test-dataset",
