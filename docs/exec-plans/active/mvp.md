@@ -184,6 +184,9 @@
 - [x] multi-turn / behavior datasetを15〜20件用意する。
 - [x] frustration positive 50件、hard negative 50件を用意する。
 - [x] 決定的scorerとLLM / human scorerを分離する。
+- [x] versioned corpus/model/promptで実retrieval・synthesis・multi-turn workflowを実行する。
+- [x] required metric欠落をfail closedにし、technical/scientific statusを分離する。
+- [x] zero-incident指標、閾値境界、nearest-rank p95をtyped summaryへ集約する。
 - [ ] Weave Evaluationをversioned datasetで実W&B上で実行する。
 - [ ] User Frustration / Satisfactionをpilotで100%適用する。
 - [ ] Low Quality Responseを20%適用する。
@@ -194,6 +197,8 @@
 ### Exit criteria
 
 - 全release gateを自動集計できる。
+- synthetic v1のactual workflow technical smokeはnDCG@10不足を検出し、scientific
+  releaseはSME review完了まで`ineligible`となる。
 - frustrationでprecision 0.80以上、recall 0.85以上を満たす。
 - 生trace全件をLLMへ渡さず、傾向分析できる。
 - Signalsが安全guardrailではないことを運用手順で明記する。

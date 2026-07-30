@@ -447,6 +447,14 @@ gold evidence、禁止claim、frustration labelは脳卒中または創薬SMEが
 | frustration precision | 0.80以上 |
 | frustration recall | 0.85以上 |
 
+required metricまたはzero-incident件数が1つでも欠落した場合はrelease gateを失敗とする。
+`context使用比率 p95`は昇順に並べたnearest-rank
+`ceil(0.95 * n)`番目で計算し、`0.80`ちょうどは不合格とする。technical smokeと
+scientific releaseを別statusで出力し、synthetic、未SME review、human review未完了の
+datasetはtechnical smokeが合格してもscientific releaseを`ineligible`とする。
+deterministic scorer、LLM judge、human / SME scorerの出力元を混同せず、LLM judgeだけで
+scientific releaseを許可しない。
+
 flag済みtraceはserver-side filterで対象を絞り、表形式で集計する。生trace全件をLLMへ渡さない。集計は件数、率、version、error class、tool pattern、context帯、feedback理由を基本とする。SMEが確認した事例だけをchallenge datasetへ昇格する。
 
 ## 19. テストと品質gate

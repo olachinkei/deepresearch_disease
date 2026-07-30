@@ -20,11 +20,32 @@ uv run pytest
 uv run run-offline-eval
 ```
 
-The test suite separately covers schema, disease scope, tool policy, Recall@10,
-nDCG@10, citation resolution, Markdown/claim/source-registry integrity, coverage,
-claim-evidence support/lexical entailment, context/truncation, evidence-stage
-calibration, contradiction handling, multi-turn retention, frustration metrics,
-and release-gate aggregation.
+`run-offline-eval` builds a versioned synthetic SQLite corpus, runs the actual
+`CorpusRepository` and `ResearchWorkflow`, executes the multi-turn session path, and
+scores the observed outputs. The `retrieved_document_ids` stored in the fixture remain
+fixture-integrity metadata and are not used as the actual retrieval output.
+
+The command exits non-zero when the technical smoke fails. Add
+`--require-scientific-release` when a release job must also require an eligible,
+SME-reviewed dataset and an explicit passing human review. LLM-judge metrics are
+advisory and cannot satisfy that requirement.
+
+The typed summary reports independent metrics for schema, scope, tool policy,
+Recall@10, nDCG@10, citation resolution/coverage, retrieved-before-cited,
+claim-evidence entailment, source status, stage calibration, conflict handling,
+multi-turn retention, context p95, truncation, and frustration precision/recall.
+Missing required metrics or incident counters always fail the technical gate.
+`context_ratio_p95` uses nearest-rank `ceil(0.95 * n)` and fails at `0.80`.
+
+The current synthetic v1 run intentionally reports:
+
+- `technical_smoke_status=failed`, because actual nDCG@10 is approximately `0.4643`;
+- `scientific_release_status=ineligible`, because the dataset is synthetic,
+  unreviewed, and not release-gate eligible.
+
+The nDCG failure exposes repeated identical queries mapped to different expected
+document IDs in v1. Do not tune the threshold or substitute the recorded rankings.
+Issue #10 must replace these fixtures with SME-reviewed, adjudicated labels.
 
 ## Weave evaluation
 
@@ -34,11 +55,11 @@ and public/synthetic rows. LLM-as-judge outputs are advisory until SME review an
 must not replace deterministic citation, scope, loop, truncation, or retraction
 checks.
 
-The release thresholds are defined in `evaluation/scorers.py`. A release requires
+The release thresholds are defined in `evaluation/gates.py`. A release requires
 zero fabricated citations, citation-registry mismatches, unsupported claims,
 positive retracted-source uses, scope violations, tool loops, and truncations,
-plus all configured quality thresholds. Synthetic fixture success alone cannot
-satisfy the release gate.
+retrieved-before-cited violations, plus all configured quality thresholds.
+Synthetic fixture success alone cannot satisfy the release gate.
 
 ## Trace analysis and Signals
 

@@ -8,8 +8,12 @@ from deepresearch_agent.evaluation.scorers import (
     citation_registry_integrity_score,
     citation_resolvability_score,
     claim_evidence_entailment_score,
+    contradiction_handling_score,
     disease_scope_score,
+    retrieved_before_cited_score,
+    schema_score,
     tool_policy_score,
+    truncation_score,
 )
 
 
@@ -55,23 +59,66 @@ def build_weave_evaluation(
             output.get("claims", []),
             output.get("evidence", []),
         )
+        cited_ids = [
+            evidence_id
+            for claim in output.get("claims", [])
+            for evidence_id in claim.get("evidence_ids", [])
+        ]
+        retrieved = retrieved_before_cited_score(
+            cited_ids,
+            [item.get("id", "") for item in output.get("evidence", [])],
+        )
         return {
             "passed": (
                 result["passed"]
                 and coverage["passed"]
                 and registry["passed"]
                 and entailment["passed"]
+                and retrieved["passed"]
             ),
             "resolvability": result["score"],
             "coverage": coverage["score"],
             "registry_integrity": registry["score"],
             "entailment": entailment["score"],
             "retracted_positive_uses": entailment["retracted_positive_uses"],
+            "retrieved_before_cited": retrieved["score"],
+        }
+
+    @weave.op(name="output_safety")
+    def output_safety_scorer(output: dict[str, Any]) -> dict[str, Any]:
+        manifest = output.get("manifest", {})
+        schema = schema_score(output)
+        truncation = truncation_score(
+            manifest.get("finish_reason"),
+            manifest.get("flags", []),
+        )
+        conflict = contradiction_handling_score(
+            output.get("answer_markdown", ""),
+            [
+                item.get("support_level", "unknown")
+                for item in output.get("evidence", [])
+            ],
+        )
+        return {
+            "passed": schema["passed"] and truncation["passed"] and conflict["passed"],
+            "schema": schema["score"],
+            "truncation": truncation["score"],
+            "conflict_handling": conflict["score"],
         }
 
     return weave.Evaluation(
         name=name,
         dataset=dataset,
-        scorers=[disease_scope_scorer, tool_policy_scorer, citation_scorer],
-        metadata={"fixture_status": "synthetic_unreviewed", "version": "v1"},
+        scorers=[
+            disease_scope_scorer,
+            tool_policy_scorer,
+            citation_scorer,
+            output_safety_scorer,
+        ],
+        metadata={
+            "fixture_status": "synthetic_unreviewed",
+            "version": "v1",
+            "scorer_version": "v2",
+            "scientific_release_eligible": False,
+        },
     ), model

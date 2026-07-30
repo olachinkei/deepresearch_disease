@@ -53,6 +53,19 @@ class AdkSessionStateStore:
         )
         return state
 
+    async def get_state(
+        self,
+        *,
+        user_id: str,
+        session_id: str,
+    ) -> dict[str, Any]:
+        session = await self._service.get_session(
+            app_name=self._app_name,
+            user_id=user_id,
+            session_id=session_id,
+        )
+        return dict(session.state) if session else {}
+
 
 def merge_research_state(
     current: dict[str, Any],
