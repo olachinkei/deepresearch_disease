@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,8 +33,22 @@ class Settings(BaseSettings):
     allow_public_content_to_gemini: bool = False
     allow_internal_content_to_gemini: bool = False
     allow_research_hypothesis_to_gemini: bool = False
-    trace_content_enabled: bool = False
-    trace_research_hypotheses_enabled: bool = False
+    trace_input_content_enabled: bool = False
+    trace_output_content_enabled: bool = False
+    trace_public_input_fingerprints: frozenset[str] = Field(default_factory=frozenset)
+    trace_synthetic_input_fingerprints: frozenset[str] = Field(default_factory=frozenset)
+    legacy_trace_content_enabled: bool | None = Field(
+        default=None,
+        validation_alias="AGENT_TRACE_CONTENT_ENABLED",
+        exclude=True,
+        repr=False,
+    )
+    legacy_trace_research_hypotheses_enabled: bool | None = Field(
+        default=None,
+        validation_alias="AGENT_TRACE_RESEARCH_HYPOTHESES_ENABLED",
+        exclude=True,
+        repr=False,
+    )
     feedback_comment_to_wandb_enabled: bool = False
     internal_ingestion_enabled: bool = False
 
@@ -49,6 +63,45 @@ class Settings(BaseSettings):
         if len(value.get_secret_value()) < 24:
             raise ValueError("AGENT_HMAC_SECRET must contain at least 24 characters")
         return value
+
+    @field_validator(
+        "trace_public_input_fingerprints",
+        "trace_synthetic_input_fingerprints",
+    )
+    @classmethod
+    def validate_trace_input_fingerprints(
+        cls, values: frozenset[str]
+    ) -> frozenset[str]:
+        if any(
+            len(value) != 64
+            or value != value.lower()
+            or any(character not in "0123456789abcdef" for character in value)
+            for value in values
+        ):
+            raise ValueError("trace input fingerprints must be lowercase SHA-256 values")
+        return values
+
+    @model_validator(mode="after")
+    def validate_trace_content_policy(self) -> Settings:
+        if self.legacy_trace_content_enabled:
+            raise ValueError(
+                "AGENT_TRACE_CONTENT_ENABLED was removed; configure independent "
+                "input/output trace flags"
+            )
+        if self.legacy_trace_research_hypotheses_enabled:
+            raise ValueError(
+                "AGENT_TRACE_RESEARCH_HYPOTHESES_ENABLED was removed; use exact "
+                "server-owned trace input fingerprints"
+            )
+        overlap = (
+            self.trace_public_input_fingerprints
+            & self.trace_synthetic_input_fingerprints
+        )
+        if overlap:
+            raise ValueError(
+                "trace input fingerprints cannot be both public and synthetic"
+            )
+        return self
 
     @property
     def live_exa_enabled(self) -> bool:

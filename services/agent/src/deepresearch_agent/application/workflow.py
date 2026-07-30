@@ -35,9 +35,12 @@ from deepresearch_agent.infrastructure.exa import ExaSearchClient
 from deepresearch_agent.infrastructure.sessions import AdkSessionStateStore
 from deepresearch_agent.observability.otel import (
     TraceMetadata,
+    classify_trace_input,
+    classify_trace_output,
     pseudonymize_user,
     set_safe_span_attributes,
     trace_content_attributes,
+    trace_input_fingerprint,
 )
 from deepresearch_agent.settings import Settings
 
@@ -107,6 +110,21 @@ class ResearchWorkflow:
             mechanism=mechanism or state.get("mechanism"),
             disease=disease or state.get("disease"),
             research_question=effective_question,
+        )
+        input_classification = classify_trace_input(
+            fingerprint=trace_input_fingerprint(
+                question=question,
+                target_molecule=normalized.target_molecule,
+                mechanism=(
+                    normalized.mechanism.value if normalized.mechanism else None
+                ),
+                disease=normalized.disease,
+                research_question=normalized.research_question,
+            ),
+            public_fingerprints=self._settings.trace_public_input_fingerprints,
+            synthetic_fingerprints=(
+                self._settings.trace_synthetic_input_fingerprints
+            ),
         )
         trace_metadata = TraceMetadata(
             user_hash=pseudonymize_user(
@@ -212,6 +230,12 @@ class ResearchWorkflow:
                 limitations=draft.limitations,
                 manifest=manifest,
             )
+            output_classification = classify_trace_output(
+                input_classification=input_classification,
+                has_internal_evidence=any(
+                    item.source_kind == SourceKind.INTERNAL for item in packed
+                ),
+            )
             final_attributes: dict[str, Any] = {
                 "app.tool_count": budget.total_calls,
                 "app.duplicate_query_count": budget.duplicate_query_count,
@@ -220,20 +244,13 @@ class ResearchWorkflow:
                 "app.citation_count": manifest.citation_count,
                 "app.source_count": manifest.source_count,
                 "app.flags_csv": ",".join(manifest.flags),
+                "app.input_data_classification": input_classification.value,
+                "app.output_data_classification": output_classification.value,
                 **trace_content_attributes(
-                    enabled=self._settings.trace_content_enabled,
-                    data_classification=(
-                        "internal"
-                        if any(item.source_kind == SourceKind.INTERNAL for item in packed)
-                        else (
-                            "public"
-                            if (
-                                not normalized.target_molecule
-                                or self._settings.trace_research_hypotheses_enabled
-                            )
-                            else "research_sensitive"
-                        )
-                    ),
+                    input_enabled=self._settings.trace_input_content_enabled,
+                    output_enabled=self._settings.trace_output_content_enabled,
+                    input_classification=input_classification,
+                    output_classification=output_classification,
                     question=question,
                     answer=result.answer_markdown,
                 ),

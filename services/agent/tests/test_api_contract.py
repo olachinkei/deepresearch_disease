@@ -141,6 +141,31 @@ async def test_cancel_unknown_turn_and_conversation_mismatch(tmp_path, monkeypat
 
 
 @pytest.mark.asyncio
+async def test_client_cannot_set_trace_data_classification(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
+    app = create_app(
+        settings=Settings(
+            database_path=tmp_path / "corpus.sqlite",
+            session_database_path=tmp_path / "sessions.sqlite",
+        ),
+        workflow=FakeWorkflow(),  # type: ignore[arg-type]
+        feedback_synchronizer=FeedbackSynchronizer(None),
+    )
+    payload = _payload()
+    metadata = dict(payload["custom_metadata"])  # type: ignore[arg-type]
+    metadata["data_classification"] = "public"
+    payload["custom_metadata"] = metadata
+
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://agent.test",
+    ) as client:
+        response = await client.post("/run_sse", json=payload)
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_cancel_registry_contract() -> None:
     from deepresearch_agent.api.app import RunRegistry
 
