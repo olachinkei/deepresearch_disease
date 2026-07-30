@@ -25,6 +25,15 @@ non-public/synthetic data path even when such a registry is present. Exact
 server-classified public/synthetic trace fingerprints remain allowed. Only a separately
 governed deployment may select `approved_sensitive_pilot`.
 
+### Model and prompt contract
+
+Generation is pinned to the exact stable model ID `gemini-3.6-flash`; aliases,
+preview IDs, older models, and silent fallback are rejected by configuration.
+The synthesis prompt uses semantic version `1.0.0` plus a SHA-256 of its canonical
+instruction/input/output contract. Model ID, prompt version, and hash are written to
+run/evaluation manifests and safe trace attributes without prompt text or evidence.
+Changes follow [`docs/runbooks/model-prompt-upgrade.md`](../../docs/runbooks/model-prompt-upgrade.md).
+
 ### Exa failure and metadata behavior
 
 Live Exa search has a hard two-call budget per turn. Retryable timeout, rate-limit,

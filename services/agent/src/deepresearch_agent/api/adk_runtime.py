@@ -19,6 +19,11 @@ from deepresearch_agent.api.schemas import RunCustomMetadata
 from deepresearch_agent.application.workflow import ResearchWorkflow
 from deepresearch_agent.domain.models import RunManifest, WorkflowEvent
 from deepresearch_agent.infrastructure.sessions import merge_research_state
+from deepresearch_agent.model_contract import (
+    GENERATION_MODEL_ID,
+    SYNTHESIS_PROMPT_SHA256,
+    SYNTHESIS_PROMPT_VERSION,
+)
 from deepresearch_agent.observability.otel import set_safe_span_attributes
 
 logger = logging.getLogger(__name__)
@@ -80,7 +85,9 @@ class DeepResearchAdkAgent(BaseAgent):
     registry: AdkRunRegistry
     deadline_seconds: float = 180.0
     runtime_mode: str = "mock"
-    prompt_version: str = "v1"
+    model_id: str = GENERATION_MODEL_ID
+    prompt_version: str = SYNTHESIS_PROMPT_VERSION
+    prompt_sha256: str = SYNTHESIS_PROMPT_SHA256
     corpus_version: str = "unknown"
 
     async def _run_async_impl(
@@ -203,7 +210,9 @@ class DeepResearchAdkAgent(BaseAgent):
             turn_id=metadata.turn_id,
             conversation_id=metadata.conversation_id,
             agent_version=__version__,
+            model_id=self.model_id,
             prompt_version=self.prompt_version,
+            prompt_sha256=self.prompt_sha256,
             corpus_version=self.corpus_version,
             runtime_mode=self.runtime_mode,
             tool_counts={},
@@ -251,7 +260,9 @@ def build_agent_loader(
     *,
     deadline_seconds: float = 180.0,
     runtime_mode: str = "mock",
-    prompt_version: str = "v1",
+    model_id: str = GENERATION_MODEL_ID,
+    prompt_version: str = SYNTHESIS_PROMPT_VERSION,
+    prompt_sha256: str = SYNTHESIS_PROMPT_SHA256,
     corpus_version: str = "unknown",
 ) -> StaticAgentLoader:
     agent = DeepResearchAdkAgent(
@@ -261,7 +272,9 @@ def build_agent_loader(
         registry=registry,
         deadline_seconds=deadline_seconds,
         runtime_mode=runtime_mode,
+        model_id=model_id,
         prompt_version=prompt_version,
+        prompt_sha256=prompt_sha256,
         corpus_version=corpus_version,
     )
     return StaticAgentLoader(

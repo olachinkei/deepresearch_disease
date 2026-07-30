@@ -161,7 +161,9 @@ class RunManifest(BaseModel):
     turn_id: str
     conversation_id: str
     agent_version: str
+    model_id: str
     prompt_version: str
+    prompt_sha256: str
     corpus_version: str
     runtime_mode: str
     tool_counts: dict[str, int]

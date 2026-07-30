@@ -18,6 +18,11 @@ from deepresearch_agent.application.synthesis import SynthesisDraft
 from deepresearch_agent.application.workflow import ResearchWorkflow
 from deepresearch_agent.domain.models import Evidence, SourceKind, WorkflowEvent
 from deepresearch_agent.infrastructure.sessions import AdkSessionStateStore
+from deepresearch_agent.model_contract import (
+    GENERATION_MODEL_ID,
+    SYNTHESIS_PROMPT_SHA256,
+    SYNTHESIS_PROMPT_VERSION,
+)
 from deepresearch_agent.settings import Settings
 
 
@@ -102,6 +107,10 @@ async def test_google_adk_api_server_openapi_sse_and_session_state(
         "answer_delta",
         "completed",
     ]
+    manifest = events[-1]["customMetadata"]["manifest"]
+    assert manifest["model_id"] == GENERATION_MODEL_ID
+    assert manifest["prompt_version"] == SYNTHESIS_PROMPT_VERSION
+    assert manifest["prompt_sha256"] == SYNTHESIS_PROMPT_SHA256
     state = session.json()["state"]
     assert state["turn_count"] == 2
     assert state["target_molecule"] == "NLRP3"

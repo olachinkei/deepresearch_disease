@@ -386,6 +386,7 @@ async def _execute_suites(
             agent=__version__,
             model="deterministic-synthesizer-v1",
             prompt=settings.prompt_version,
+            prompt_sha256=settings.prompt_sha256,
             corpus=settings.corpus_version,
             embedding=embedding_model,
             dataset=str(manifest["version"]),

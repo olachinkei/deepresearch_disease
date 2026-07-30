@@ -41,9 +41,10 @@ pnpm test:e2e
 
 通常のテストはGemini、Exa、Weaveをmock化しています。資格情報を伴うlive canaryと実W&B smokeは明示コマンドでのみ実行され、通常のCIからは呼ばれません。
 
-GitHub Actionsの `Live canary` は手動実行専用です。固定された合成queryだけを使い、
-`live-canary` environmentで承認されたsecretがある場合に限って実行します。任意の質問や
-社内データをworkflow inputとして渡すことはできません。
+GitHub Actionsの `Live canary` は手動実行専用です。固定されたコード所有の合成
+Evidenceだけで、pin済みGemini model/promptの構造化生成を確認します。
+`live-canary` environmentで承認されたsecretがある場合に限って実行し、任意の質問、
+Exa、社内データをworkflow inputとして渡すことはできません。
 
 初回公開と以後のcommitでは、次の監査を実行します。
 
