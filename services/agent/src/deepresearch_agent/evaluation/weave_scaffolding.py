@@ -5,7 +5,9 @@ from typing import Any
 
 from deepresearch_agent.evaluation.scorers import (
     citation_coverage_score,
+    citation_registry_integrity_score,
     citation_resolvability_score,
+    claim_evidence_entailment_score,
     disease_scope_score,
     tool_policy_score,
 )
@@ -44,10 +46,27 @@ def build_weave_evaluation(
             [source.get("evidence_id", "") for source in sources],
         )
         coverage = citation_coverage_score(output.get("claims", []))
+        registry = citation_registry_integrity_score(
+            output.get("answer_markdown", ""),
+            output.get("claims", []),
+            sources,
+        )
+        entailment = claim_evidence_entailment_score(
+            output.get("claims", []),
+            output.get("evidence", []),
+        )
         return {
-            "passed": result["passed"] and coverage["passed"],
+            "passed": (
+                result["passed"]
+                and coverage["passed"]
+                and registry["passed"]
+                and entailment["passed"]
+            ),
             "resolvability": result["score"],
             "coverage": coverage["score"],
+            "registry_integrity": registry["score"],
+            "entailment": entailment["score"],
+            "retracted_positive_uses": entailment["retracted_positive_uses"],
         }
 
     return weave.Evaluation(

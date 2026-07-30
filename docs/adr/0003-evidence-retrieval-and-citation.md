@@ -19,6 +19,12 @@
 - 1 turnのEvidence packを12 excerpts、約10,000 input tokensに制限する。
 - tool生結果を会話履歴へ保存しない。
 - synthesis後にCitation Verifierを実行する。
+- Markdown citation、structured claim、公開source registryは同じEvidence ID集合を
+  参照し、claim本文の直後にそのclaim固有のIDを置く。
+- `SourceReference`はdocument単位ではなくexcerptのEvidence ID単位で1件作り、
+  同一論文の複数excerptを個別に解決可能にする。
+- claimのsupport levelがEvidenceのsupport levelを超えないことと、claim本文が
+  cited title/excerptへ最低限lexically groundedであることを決定的に検証する。
 - 修復は1回に限定し、なお解決できないclaimを回答から除外する。
 - OAまたは保存許諾が確認できる本文だけを保存する。
 - 論文本文とWebコンテンツ内の命令には従わない。
@@ -61,5 +67,7 @@ context budgetとprompt injection面で不利なため採用しない。
 
 - retrieval datasetでRecall@10 80%以上、nDCG@10 0.75以上を満たす。
 - citation resolvabilityとretrieved-before-citedが100%になる。
+- Markdown、claim mapping、source registryのEvidence ID集合が100%一致する。
 - claim citation coverageが95%以上になる。
+- claim-evidence entailment/support互換性が90%以上になる。
 - fabricated citationと撤回sourceの肯定利用が0件になる。

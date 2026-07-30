@@ -118,12 +118,16 @@ class ResearchInput(BaseModel):
 
 
 class Claim(BaseModel):
-    text: str
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(min_length=1)
     evidence_ids: list[str] = Field(default_factory=list)
     support_level: SupportLevel
 
 
 class SourceReference(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     evidence_id: str
     document_id: str
     title: str

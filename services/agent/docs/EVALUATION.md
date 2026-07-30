@@ -21,9 +21,10 @@ uv run run-offline-eval
 ```
 
 The test suite separately covers schema, disease scope, tool policy, Recall@10,
-nDCG@10, citation resolution and coverage, context/truncation, lexical
-groundedness, evidence-stage calibration, contradiction handling, multi-turn
-retention, frustration metrics, and release-gate aggregation.
+nDCG@10, citation resolution, Markdown/claim/source-registry integrity, coverage,
+claim-evidence support/lexical entailment, context/truncation, evidence-stage
+calibration, contradiction handling, multi-turn retention, frustration metrics,
+and release-gate aggregation.
 
 ## Weave evaluation
 
@@ -34,9 +35,10 @@ must not replace deterministic citation, scope, loop, truncation, or retraction
 checks.
 
 The release thresholds are defined in `evaluation/scorers.py`. A release requires
-zero fabricated citations, positive retracted-source uses, scope violations, tool
-loops, and truncations, plus all configured quality thresholds. Synthetic fixture
-success alone cannot satisfy the release gate.
+zero fabricated citations, citation-registry mismatches, unsupported claims,
+positive retracted-source uses, scope violations, tool loops, and truncations,
+plus all configured quality thresholds. Synthetic fixture success alone cannot
+satisfy the release gate.
 
 ## Trace analysis and Signals
 

@@ -181,10 +181,19 @@ class ResearchWorkflow:
                 evidence=packed,
                 safe_trace_metadata=safe_metadata,
             )
+            sources = self._source_references(
+                packed,
+                evidence_ids={
+                    evidence_id
+                    for claim in draft.claims
+                    for evidence_id in claim.evidence_ids
+                },
+            )
             check = verify_citations(
                 answer_markdown=draft.answer_markdown,
                 claims=draft.claims,
                 evidence=packed,
+                sources=sources,
             )
             if not check.valid:
                 budget.flags.add("citation_repair")
@@ -193,10 +202,19 @@ class ResearchWorkflow:
                     evidence=[item for item in packed if not item.retracted],
                     safe_trace_metadata=safe_metadata,
                 )
+                sources = self._source_references(
+                    packed,
+                    evidence_ids={
+                        evidence_id
+                        for claim in draft.claims
+                        for evidence_id in claim.evidence_ids
+                    },
+                )
                 check = verify_citations(
                     answer_markdown=draft.answer_markdown,
                     claims=draft.claims,
                     evidence=packed,
+                    sources=sources,
                 )
             if not check.valid:
                 budget.flags.add("citation_verification_failed")
@@ -208,8 +226,8 @@ class ResearchWorkflow:
                     claims=[],
                     limitations=[*draft.limitations, "Citation verification failed."],
                 )
+                sources = []
 
-            sources = self._source_references(packed)
             manifest = RunManifest(
                 turn_id=turn_id,
                 conversation_id=conversation_id,
@@ -379,25 +397,24 @@ class ResearchWorkflow:
         return self._adk_synthesizer
 
     @staticmethod
-    def _source_references(evidence: list[Evidence]) -> list[SourceReference]:
-        result: list[SourceReference] = []
-        seen: set[str] = set()
-        for item in evidence:
-            if item.document_id in seen:
-                continue
-            seen.add(item.document_id)
-            result.append(
-                SourceReference(
-                    evidence_id=item.id,
-                    document_id=item.document_id,
-                    title=item.title,
-                    source_kind=item.source_kind,
-                    url=item.canonical_url,
-                    doi=item.doi,
-                    pmid=item.pmid,
-                )
+    def _source_references(
+        evidence: list[Evidence],
+        *,
+        evidence_ids: set[str],
+    ) -> list[SourceReference]:
+        return [
+            SourceReference(
+                evidence_id=item.id,
+                document_id=item.document_id,
+                title=item.title,
+                source_kind=item.source_kind,
+                url=item.canonical_url,
+                doi=item.doi,
+                pmid=item.pmid,
             )
-        return result
+            for item in evidence
+            if item.id in evidence_ids
+        ]
 
     @staticmethod
     def _raise_if_cancelled(cancel_event: asyncio.Event) -> None:

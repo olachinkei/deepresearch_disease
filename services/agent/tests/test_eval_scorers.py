@@ -5,7 +5,9 @@ import pytest
 from deepresearch_agent.evaluation.runner import FIXTURE_DIRECTORY, evaluate_fixtures
 from deepresearch_agent.evaluation.scorers import (
     citation_coverage_score,
+    citation_registry_integrity_score,
     citation_resolvability_score,
+    claim_evidence_entailment_score,
     frustration_metrics,
     ndcg_at_k,
     recall_at_k,
@@ -23,6 +25,56 @@ def test_retrieval_metrics_and_citation_scores() -> None:
     assert citation_coverage_score(
         [{"evidence_ids": ["E1"]}, {"evidence_ids": []}]
     )["score"] == 0.5
+    assert citation_registry_integrity_score(
+        "Alpha finding [E2]\nBeta finding [E2]",
+        [
+            {
+                "text": "Alpha finding",
+                "evidence_ids": ["E1"],
+                "support_level": "background",
+            },
+            {
+                "text": "Beta finding",
+                "evidence_ids": ["E2"],
+                "support_level": "background",
+            },
+        ],
+        [{"evidence_id": "E1"}, {"evidence_id": "E2"}],
+    ) == {
+        "passed": False,
+        "score": 0.0,
+        "mismatched_ids": ["E1"],
+        "claim_mapping_mismatch_indexes": [0],
+        "duplicate_source_ids": 0,
+    }
+
+
+def test_claim_evidence_entailment_and_retraction_score() -> None:
+    result = claim_evidence_entailment_score(
+        [
+            {
+                "text": "MMP9 supports the synthetic finding",
+                "evidence_ids": ["E1"],
+                "support_level": "supports",
+            }
+        ],
+        [
+            {
+                "id": "E1",
+                "document_id": "d1",
+                "source_kind": "public",
+                "title": "MMP9 synthetic finding",
+                "excerpt": "MMP9 supports the synthetic finding.",
+                "support_level": "supports",
+                "retracted": True,
+            }
+        ],
+    )
+
+    assert not result["passed"]
+    assert result["score"] == 1.0
+    assert result["unsupported_claim_indexes"] == []
+    assert result["retracted_positive_uses"] == 1
 
 
 def test_policy_frustration_and_release_gate() -> None:
