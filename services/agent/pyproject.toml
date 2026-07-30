@@ -35,6 +35,7 @@ deepresearch-agent = "deepresearch_agent.cli:serve"
 collect-public-seed = "deepresearch_agent.seed.cli:main"
 analyze-flagged-traces = "deepresearch_agent.observability.flag_analysis:main"
 run-offline-eval = "deepresearch_agent.evaluation.runner:main"
+validate-gold-dataset = "deepresearch_agent.evaluation.dataset_governance:main"
 
 [build-system]
 requires = ["hatchling"]

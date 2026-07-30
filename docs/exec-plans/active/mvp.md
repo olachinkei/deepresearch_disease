@@ -194,6 +194,9 @@
 - [ ] Low Quality Responseを20%適用する。
 - [ ] custom medical overclaim / unsupported citationを10〜20%適用する。
 - [x] server-side filterと表形式集計の分析script / runbookを作る。
+- [x] gold datasetの二者review、adjudication、case/label hash、coverage、
+  provenance/license、IAAをfail-closedで検証するschema/CLIを作る。
+- [x] schema-v1の自己申告を拒否し、検証済みschema-v2だけをhuman review入力へ接続する。
 - [ ] SME review済み事例だけをchallenge datasetへ昇格する。
 
 ### Exit criteria

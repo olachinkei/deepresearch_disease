@@ -47,6 +47,19 @@ The nDCG failure exposes repeated identical queries mapped to different expected
 document IDs in v1. Do not tune the threshold or substitute the recorded rankings.
 Issue #10 must replace these fixtures with SME-reviewed, adjudicated labels.
 
+Schema-v2 candidate and gold bundles use
+[`GOLD_DATASET_LABELING.md`](GOLD_DATASET_LABELING.md). Run
+`validate-gold-dataset --fixtures <path>` before evaluation. The validator binds two
+independent SME reviews and adjudication to the current case and label hashes, checks
+required coverage/counts, rejects repeated case templates and missing
+provenance/licenses, reports exact reviewer agreement and unresolved labels, and
+prevents internal material from entering a public artifact.
+
+Manifest booleans are not sufficient evidence. Only a clean schema-v2 governance
+report can set `sme_reviewed`, scientific-gold eligibility, and the human-review input
+used by the scientific release gate. Legacy manifests cannot self-declare those
+statuses.
+
 ## Weave evaluation
 
 `build_weave_evaluation` creates a versioned Weave Dataset and Evaluation with
