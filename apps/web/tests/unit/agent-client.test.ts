@@ -56,7 +56,21 @@ describe("HttpAgentClient", () => {
           content: { parts: [{ text: "# 結論\n引用付き回答" }] },
           customMetadata: {
             kind: "completed",
-            source_count: 4,
+            source_count: 2,
+            source_summary: [
+              {
+                id: "E1",
+                title: "First excerpt",
+                url: "https://example.test/same-document",
+                sourceType: "web",
+              },
+              {
+                id: "E2",
+                title: "Second excerpt",
+                url: "https://example.test/same-document",
+                sourceType: "web",
+              },
+            ],
           },
         },
       ]);
@@ -88,6 +102,13 @@ describe("HttpAgentClient", () => {
     });
     const serialized = JSON.stringify(events);
     expect(serialized).toContain("引用付き回答");
+    expect(events.at(-1)).toMatchObject({
+      type: "completed",
+      data: {
+        sourceCount: 2,
+        sourceSummary: [{ id: "E1" }, { id: "E2" }],
+      },
+    });
     expect(serialized).not.toContain("秘密の表示名");
     expect(serialized).not.toContain("内部本文");
   });

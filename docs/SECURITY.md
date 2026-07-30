@@ -216,8 +216,11 @@ Public/Synthetic allowlistに一致しない場合は送らない。Internal Evi
 ## 13. Citation safety
 
 - source registryに存在し、そのturnでretrieval済みのsource IDだけを許可する。
+- Markdown citation、structured claim、source registryのEvidence ID集合を一致させる。
+- source registryはdocument単位で潰さず、excerptのEvidence IDごとに解決可能にする。
 - citationのURL、DOI、PMIDを解決できるか検証する。
-- claimとEvidence excerptの対応を検証する。
+- claim直後のcitation mapping、support level互換性、Evidence title/excerptへの
+  lexical groundingを検証する。
 - Citation Verifierのrepairは1回に限定する。
 - repair後もunsupportedなclaimを削除する。
 - 撤回sourceを肯定的根拠として使用しない。

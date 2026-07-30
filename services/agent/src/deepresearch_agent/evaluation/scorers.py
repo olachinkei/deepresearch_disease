@@ -8,7 +8,16 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from deepresearch_agent.domain.models import ResearchResult
+from deepresearch_agent.application.citations import (
+    claim_is_supported,
+    claim_markdown_evidence_ids,
+)
+from deepresearch_agent.domain.models import (
+    Claim,
+    Evidence,
+    ResearchResult,
+    SupportLevel,
+)
 
 _CITATION = re.compile(r"\[(E[0-9A-Za-z_-]+)\]")
 _WORD = re.compile(r"[A-Za-z0-9]{3,}")
@@ -84,6 +93,89 @@ def citation_coverage_score(claims: Sequence[dict[str, Any]]) -> dict[str, Any]:
     covered = sum(bool(claim.get("evidence_ids")) for claim in claims)
     score = covered / len(claims)
     return {"passed": score >= 0.95, "score": score, "covered": covered, "total": len(claims)}
+
+
+def citation_registry_integrity_score(
+    answer_markdown: str,
+    claims: Sequence[dict[str, Any]],
+    sources: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    markdown_ids = set(_CITATION.findall(answer_markdown))
+    claim_ids = {
+        str(evidence_id)
+        for claim in claims
+        for evidence_id in claim.get("evidence_ids", [])
+    }
+    source_id_list = [str(source.get("evidence_id", "")) for source in sources]
+    source_ids = {evidence_id for evidence_id in source_id_list if evidence_id}
+    claim_mapping_mismatches = [
+        index
+        for index, claim in enumerate(claims)
+        if claim_markdown_evidence_ids(
+            answer_markdown,
+            str(claim.get("text", "")),
+        )
+        != frozenset(str(item) for item in claim.get("evidence_ids", []))
+    ]
+    mismatched_ids = (
+        markdown_ids.symmetric_difference(claim_ids)
+        | claim_ids.symmetric_difference(source_ids)
+    )
+    duplicate_source_ids = len(source_id_list) - len(source_ids)
+    passed = (
+        not mismatched_ids
+        and not claim_mapping_mismatches
+        and duplicate_source_ids == 0
+    )
+    return {
+        "passed": passed,
+        "score": float(passed),
+        "mismatched_ids": sorted(mismatched_ids),
+        "claim_mapping_mismatch_indexes": claim_mapping_mismatches,
+        "duplicate_source_ids": duplicate_source_ids,
+    }
+
+
+def claim_evidence_entailment_score(
+    claims: Sequence[dict[str, Any]],
+    evidence: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    try:
+        parsed_claims = [Claim.model_validate(item) for item in claims]
+        parsed_evidence = [Evidence.model_validate(item) for item in evidence]
+    except ValidationError as exc:
+        return {
+            "passed": False,
+            "score": 0.0,
+            "unsupported_claim_indexes": list(range(len(claims))),
+            "retracted_positive_uses": 0,
+            "error_count": len(exc.errors()),
+        }
+    evidence_by_id = {item.id: item for item in parsed_evidence}
+    unsupported = [
+        index
+        for index, claim in enumerate(parsed_claims)
+        if not claim_is_supported(claim, evidence_by_id)
+    ]
+    retracted = {item.id for item in parsed_evidence if item.retracted}
+    retracted_positive_uses = sum(
+        evidence_id in retracted
+        for claim in parsed_claims
+        if claim.support_level in {SupportLevel.SUPPORTS, SupportLevel.MIXED}
+        for evidence_id in claim.evidence_ids
+    )
+    score = (
+        (len(parsed_claims) - len(unsupported)) / len(parsed_claims)
+        if parsed_claims
+        else 1.0
+    )
+    return {
+        "passed": score >= 0.90 and retracted_positive_uses == 0,
+        "score": score,
+        "unsupported_claim_indexes": unsupported,
+        "retracted_positive_uses": retracted_positive_uses,
+        "error_count": 0,
+    }
 
 
 def context_budget_score(context_ratio: float) -> dict[str, Any]:
@@ -174,6 +266,8 @@ def frustration_metrics(
 def release_gate(summary: dict[str, float | int]) -> dict[str, Any]:
     zero_incident_keys = [
         "fabricated_citations",
+        "citation_registry_mismatches",
+        "unsupported_claims",
         "retracted_positive_uses",
         "scope_violations",
         "tool_loops",

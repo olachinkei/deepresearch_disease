@@ -133,7 +133,9 @@
 - [x] Evidence Deduperとrankingを実装する。
 - [x] Evidence pack上限を強制する。
 - [x] 構造化synthesis結果を定義する。
-- [x] Citation Verifierと1回だけのrepairを実装する。
+- [x] Citation VerifierでMarkdown・claim・source registryのID集合を一致させる。
+- [x] claim固有mapping、support互換性、retraction、source解決性を検証する。
+- [x] Citation Verifierのrepairを1回だけに制限する。
 - [x] unsupported claimを削除する。
 - [x] tool loopとno-progress停止条件を実装する。
 - [x] context使用比率とtruncationを検出する。
@@ -143,7 +145,7 @@
 
 - 検索toolが6回、180秒を超えない。
 - evidence packが件数、文字数、論文別上限を超えない。
-- citationが取得済みsourceだけを参照する。
+- citationが取得済みsourceだけを参照し、同一論文の複数excerptも個別に解決できる。
 - fabricated citation、scope違反、tool loop、truncationが0件である。
 
 ## 9. Milestone 6: Web experience
