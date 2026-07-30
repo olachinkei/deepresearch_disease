@@ -12,6 +12,7 @@ import { FEEDBACK_REASONS } from "~/shared/domain-values";
 import {
   feedbackInputSchema,
   type FeedbackInput,
+  type FeedbackView,
 } from "./schema";
 
 const reasonLabels: Record<(typeof FEEDBACK_REASONS)[number], string> = {
@@ -25,16 +26,17 @@ const reasonLabels: Record<(typeof FEEDBACK_REASONS)[number], string> = {
 
 type FeedbackControlsProps = {
   turnId: string;
-  submitted?: boolean;
+  feedback?: FeedbackView;
   onSubmit: (turnId: string, input: FeedbackInput) => Promise<void>;
 };
 
 export function FeedbackControls({
   turnId,
-  submitted,
+  feedback,
   onSubmit,
 }: FeedbackControlsProps) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -44,6 +46,7 @@ export function FeedbackControls({
     try {
       await onSubmit(turnId, input);
       setOpen(false);
+      setEditing(false);
     } catch {
       setError("フィードバックを保存できませんでした。");
     } finally {
@@ -66,11 +69,29 @@ export function FeedbackControls({
     await send(result.data);
   }
 
-  if (submitted) {
+  if (feedback && !editing) {
+    const syncLabel =
+      feedback.syncStatus === "synced"
+        ? "同期済み"
+        : feedback.syncStatus === "syncing"
+          ? "同期中"
+          : "同期待ち";
     return (
       <div className="feedback-thanks">
         <Check aria-hidden size={15} />
-        フィードバックを保存しました
+        <span>
+          フィードバックを保存しました（
+          {feedback.vote === "up" ? "役に立った" : "改善が必要"}・
+          {syncLabel}
+          {feedback.hasComment ? "・コメントあり" : ""}）
+        </span>
+        <button
+          className="secondary-button"
+          onClick={() => setEditing(true)}
+          type="button"
+        >
+          変更
+        </button>
       </div>
     );
   }

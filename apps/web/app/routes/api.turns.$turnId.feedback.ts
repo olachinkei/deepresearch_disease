@@ -45,13 +45,23 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
   }
 
-  const feedback = await new FeedbackRepository(database).enqueue({
+  const repository = new FeedbackRepository(database);
+  const existing = await repository.findForTurn(params.turnId, identity.id);
+  const feedback = await repository.upsert({
     ...parsed.data,
     turnId: params.turnId,
     userId: identity.id,
   });
   return Response.json(
-    { id: feedback.id, syncStatus: feedback.syncStatus },
-    { status: 201 },
+    {
+      id: feedback.id,
+      turnId: feedback.turnId,
+      vote: feedback.vote,
+      reason: feedback.reason,
+      hasComment: Boolean(feedback.comment),
+      syncStatus: feedback.syncStatus,
+      revision: feedback.revision,
+    },
+    { status: existing ? 200 : 201 },
   );
 }

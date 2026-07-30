@@ -90,10 +90,12 @@ taskを直接中断する。terminal stateは送信前にregistryで確定し、
 - `conversations`
 - `turns`
 - `transcript_entries`
-- `feedback`
-- `feedback_sync_attempts`
+- `feedback_queue`
+- `feedback_revisions`
 
-feedbackはWeaveへの同期前に必ずローカルへcommitする。
+feedbackはWeaveへの同期前に必ずローカルへcommitする。現行feedbackはturn/userで
+一意とし、変更前revisionを履歴へ保存する。外部同期はrecord IDとrevisionから作る
+immutable idempotency keyで行う。
 
 ### 4.2 ADK session DB
 

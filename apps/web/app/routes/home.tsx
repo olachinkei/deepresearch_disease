@@ -22,7 +22,12 @@ import type {
   ActiveConversationView,
   TranscriptView,
 } from "~/features/conversation/view-model";
-import type { FeedbackInput } from "~/features/feedback/schema";
+import { FeedbackRepository } from "~/features/feedback/repository.server";
+import {
+  feedbackViewSchema,
+  type FeedbackInput,
+  type FeedbackView,
+} from "~/features/feedback/schema";
 import { IdentityRepository } from "~/features/identity/repository.server";
 import { resolveLocalIdentity } from "~/features/identity/service.server";
 import type { PublicResearchEvent } from "~/features/research/public-events";
@@ -56,6 +61,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   const active = selectedId
     ? await repository.getDetail(selectedId, identity.id)
     : undefined;
+  const feedback = active
+    ? await new FeedbackRepository(database).listForTurns(
+        active.turns.map((turn) => turn.id),
+        identity.id,
+      )
+    : [];
 
   return {
     identity: { displayName: identity.displayName },
@@ -83,6 +94,20 @@ export async function loader({ request }: Route.LoaderArgs) {
             content: message.content,
             createdAt: message.createdAt,
           })),
+          feedbackByTurn: Object.fromEntries(
+            feedback.map((record) => [
+              record.turnId,
+              {
+                id: record.id,
+                turnId: record.turnId,
+                vote: record.vote,
+                reason: record.reason,
+                hasComment: Boolean(record.comment),
+                syncStatus: record.syncStatus,
+                revision: record.revision,
+              },
+            ]),
+          ),
         }
       : null,
   };
@@ -119,8 +144,10 @@ export default function Home() {
   const [streamingAnswer, setStreamingAnswer] = useState("");
   const [error, setError] = useState<string>();
   const [currentTurnId, setCurrentTurnId] = useState<string>();
-  const [submittedFeedback, setSubmittedFeedback] = useState(
-    () => new Set<string>(),
+  const [feedbackByTurn, setFeedbackByTurn] = useState<
+    Record<string, FeedbackView>
+  >(
+    data.active?.feedbackByTurn ?? {},
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const abortController = useRef<AbortController | null>(null);
@@ -128,6 +155,7 @@ export default function Home() {
   useEffect(() => {
     setActive(data.active);
     setMessages(data.active?.messages ?? []);
+    setFeedbackByTurn(data.active?.feedbackByTurn ?? {});
   }, [data.active]);
 
   async function runResearch(input: ResearchRequest) {
@@ -177,6 +205,7 @@ export default function Home() {
                 researchQuestion: input.researchQuestion ?? null,
               },
               messages: [],
+              feedbackByTurn: {},
             });
           }
           return;
@@ -274,7 +303,11 @@ export default function Home() {
     if (!response.ok) {
       throw new Error("Feedback request failed.");
     }
-    setSubmittedFeedback((current) => new Set(current).add(turnId));
+    const feedback = feedbackViewSchema.parse(await response.json());
+    setFeedbackByTurn((current) => ({
+      ...current,
+      [turnId]: feedback,
+    }));
   }
 
   return (
@@ -330,7 +363,7 @@ export default function Home() {
               onFollowUp={followUp}
               progress={progress}
               streamingAnswer={streamingAnswer}
-              submittedFeedback={submittedFeedback}
+              feedbackByTurn={feedbackByTurn}
             />
           ) : (
             <ResearchForm

@@ -39,10 +39,58 @@ test("research, streaming, follow-up, reload, and feedback", async ({
   await expect(page.getByText("臨床的な有効性は未確立です.")).toHaveCount(0);
   await expect(page.getByText("臨床的な有効性は未確立です。").last()).toBeVisible();
 
-  await page.getByRole("button", { name: "役に立った" }).last().click();
+  const [feedbackResponse] = await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/feedback"),
+    ),
+    page.getByRole("button", { name: "役に立った" }).last().click(),
+  ]);
+  const firstFeedback = (await feedbackResponse.json()) as {
+    id: string;
+    revision: number;
+  };
   await expect(
     page.getByText("フィードバックを保存しました").last(),
   ).toBeVisible();
+
+  await page.reload();
+  await expect(
+    page.getByText(/フィードバックを保存しました.*役に立った.*同期待ち/u).last(),
+  ).toBeVisible();
+
+  const revisedFeedback = await page.evaluate(
+    async ({ url }) => {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          vote: "down",
+          reason: "incomplete",
+          comment: "Synthetic E2E comment",
+        }),
+      });
+      return {
+        status: response.status,
+        body: (await response.json()) as { id: string; revision: number },
+      };
+    },
+    { url: feedbackResponse.url() },
+  );
+  expect(revisedFeedback.status).toBe(200);
+  expect(revisedFeedback.body.id).toBe(firstFeedback.id);
+  expect(revisedFeedback.body.revision).toBe(firstFeedback.revision + 1);
+
+  await page.reload();
+  await expect(
+    page
+      .getByText(
+        /フィードバックを保存しました.*改善が必要.*同期待ち.*コメントあり/u,
+      )
+      .last(),
+  ).toBeVisible();
+  await expect(page.getByText("Synthetic E2E comment")).toHaveCount(0);
 });
 
 test("cancel and sanitized agent error states", async ({ page }) => {

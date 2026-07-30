@@ -173,6 +173,7 @@
 - [x] cancel / retry / error状態を実装する。
 - [x] multi-turnと再読込を実装する。
 - [x] feedback UIとローカルqueueを実装する。
+- [x] feedbackのturn/user一意性、revision同期、再読込後の状態復元を実装する。
 - [ ] Noto Sans JPとLucideを用いた最低限のaccessibilityを確認する。
 
 ### Exit criteria

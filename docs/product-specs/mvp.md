@@ -179,7 +179,10 @@ Evidence tableには、少なくともclaim、support level、evidence stage、s
 - `too_slow`
 - `other`
 
-コメントは任意とする。同じturnへの再送は、明確な更新規則またはidempotency keyで重複を防ぐ。
+コメントは任意とする。同じturn/userへの同一内容の再送は同じrecord/revisionを返す。
+vote、理由、コメントの変更時だけrevisionを増やし、`record ID + revision` を
+外部同期のidempotency keyとする。reload時はvote、理由、コメント有無、local/sync
+statusを復元するが、コメント本文はbrowserへ再送しない。
 
 ## 12. Multi-turn要件
 

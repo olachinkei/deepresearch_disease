@@ -11,7 +11,10 @@ import { useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
 
 import { FeedbackControls } from "~/features/feedback/feedback-controls";
-import type { FeedbackInput } from "~/features/feedback/schema";
+import type {
+  FeedbackInput,
+  FeedbackView,
+} from "~/features/feedback/schema";
 
 import type {
   ActiveConversationView,
@@ -25,7 +28,7 @@ type ConversationThreadProps = {
   busy: boolean;
   progress?: string;
   error?: string;
-  submittedFeedback: Set<string>;
+  feedbackByTurn: Record<string, FeedbackView>;
   onFollowUp: (question: string) => Promise<void>;
   onCancel: () => Promise<void>;
   onFeedback: (turnId: string, input: FeedbackInput) => Promise<void>;
@@ -38,7 +41,7 @@ export function ConversationThread({
   busy,
   progress,
   error,
-  submittedFeedback,
+  feedbackByTurn,
   onFollowUp,
   onCancel,
   onFeedback,
@@ -117,8 +120,8 @@ export function ConversationThread({
                   創薬仮説探索用の情報です。臨床判断や患者個別の治療助言には使用できません。
                 </div>
                 <FeedbackControls
+                  feedback={feedbackByTurn[message.turnId]}
                   onSubmit={onFeedback}
-                  submitted={submittedFeedback.has(message.turnId)}
                   turnId={message.turnId}
                 />
               </div>
