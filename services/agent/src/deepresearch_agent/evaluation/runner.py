@@ -15,6 +15,9 @@ from pydantic import HttpUrl
 from deepresearch_agent import __version__
 from deepresearch_agent.application.workflow import ResearchWorkflow
 from deepresearch_agent.domain.models import Chunk, Document, SourceKind
+from deepresearch_agent.evaluation.dataset_governance import (
+    validate_gold_dataset_bundle,
+)
 from deepresearch_agent.evaluation.gates import (
     EvaluationGateSummary,
     EvaluationVersions,
@@ -65,14 +68,30 @@ def _load_fixture_bundle(
     fixtures: Path,
 ) -> tuple[dict[str, Any], dict[str, list[dict[str, Any]]]]:
     manifest = json.loads((fixtures / "manifest.json").read_text(encoding="utf-8"))
-    if manifest.get("scientific_gold") and not manifest.get("sme_reviewed"):
-        raise ValueError("Scientific-gold fixtures require SME review")
-    if manifest.get("release_gate_eligible") and not (
-        manifest.get("scientific_gold") and manifest.get("sme_reviewed")
-    ):
-        raise ValueError(
-            "Release-gate eligibility requires scientific gold and SME review"
-        )
+    if manifest.get("schema_version") == "2":
+        governance = validate_gold_dataset_bundle(fixtures)
+        if governance.errors:
+            raise ValueError(
+                "Gold dataset governance validation failed: "
+                + ",".join(governance.errors)
+            )
+        manifest["sme_reviewed"] = governance.sme_reviewed
+        manifest["scientific_gold"] = governance.scientific_gold
+        manifest["release_gate_eligible"] = governance.release_gate_eligible
+        manifest["_human_review_passed"] = governance.sme_reviewed
+    else:
+        if any(
+            manifest.get(field)
+            for field in (
+                "sme_reviewed",
+                "scientific_gold",
+                "release_gate_eligible",
+            )
+        ):
+            raise ValueError(
+                "Legacy fixture manifests cannot claim scientific or SME review status"
+            )
+        manifest["_human_review_passed"] = False
     datasets = {
         name: load_jsonl(fixtures / filename)
         for name, filename in {
@@ -377,7 +396,7 @@ async def _execute_suites(
         scientific_gold=bool(manifest.get("scientific_gold", False)),
         sme_reviewed=bool(manifest.get("sme_reviewed", False)),
         release_gate_eligible=bool(manifest.get("release_gate_eligible", False)),
-        human_review_passed=None,
+        human_review_passed=bool(manifest.get("_human_review_passed", False)),
     )
 
 
