@@ -299,6 +299,12 @@ Citation Verifierが失敗した場合は1回だけ修復する。修復後も�
 - 検索関連tool callが6回に達する
 - 180秒に達する
 
+180秒はtool開始前だけでなく、ADK `/run_sse` invocation全体へ適用するhard deadline
+とする。deadlineまたは利用者cancel時は進行中のretrieval、metadata、synthesis taskを
+cancelしてcleanupし、`timeout`または`cancelled`の分類済みflagをmanifestとtraceへ
+本文なしで記録する。terminal eventは1 turnにつき1件だけとし、その後に
+`answer_delta`、`completed`、tool結果を送らない。
+
 toolの生結果全文を会話履歴へ保存しない。toolはevidence IDと短いexcerptを返し、完全なevidenceは会話外のstoreで管理する。4 turnごとにcontext compactionを実行する。
 
 ## 15. Weave trace

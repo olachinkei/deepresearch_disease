@@ -172,6 +172,7 @@ async def test_cancel_registry_contract() -> None:
     registry = RunRegistry()
     event = await registry.begin("turn-1")
     assert await registry.cancel("turn-1")
+    assert await registry.cancel("turn-1")
     assert event.is_set()
     await registry.finish("turn-1")
     assert not await registry.cancel("turn-1")

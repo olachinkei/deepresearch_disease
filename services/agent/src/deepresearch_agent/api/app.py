@@ -10,10 +10,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 
-from deepresearch_agent.api.adk_runtime import (
-    AdkRunRegistry,
-    build_agent_loader,
-)
+from deepresearch_agent.api.adk_runtime import AdkRunRegistry, build_agent_loader
 from deepresearch_agent.api.schemas import (
     AdkContent,
     AdkEvent,
@@ -40,31 +37,7 @@ from deepresearch_agent.infrastructure.sessions import AdkSessionStateStore
 from deepresearch_agent.observability.otel import configure_otel
 from deepresearch_agent.settings import Settings, get_settings
 
-
-class RunRegistry:
-    def __init__(self) -> None:
-        self._events: dict[str, asyncio.Event] = {}
-        self._lock = asyncio.Lock()
-
-    async def begin(self, turn_id: str) -> asyncio.Event:
-        async with self._lock:
-            if turn_id in self._events:
-                raise ValueError("turn_id is already running")
-            event = asyncio.Event()
-            self._events[turn_id] = event
-            return event
-
-    async def cancel(self, turn_id: str) -> bool:
-        async with self._lock:
-            event = self._events.get(turn_id)
-            if not event:
-                return False
-            event.set()
-            return True
-
-    async def finish(self, turn_id: str) -> None:
-        async with self._lock:
-            self._events.pop(turn_id, None)
+RunRegistry = AdkRunRegistry
 
 
 def build_workflow(settings: Settings) -> ResearchWorkflow:
@@ -143,7 +116,7 @@ def create_app(
 
         async def stream() -> AsyncIterator[str]:
             try:
-                async with asyncio.timeout(180):
+                async with asyncio.timeout(configured.turn_deadline_seconds):
                     async for workflow_event in research_workflow.run(
                         user_id=payload.user_id,
                         conversation_id=metadata.conversation_id,
@@ -173,7 +146,7 @@ def create_app(
             except TimeoutError:
                 cancel_event.set()
                 event = _terminal_event(
-                    "error", metadata.turn_id, "調査が180秒の上限を超えました。"
+                    "error", metadata.turn_id, "調査が実行時間の上限を超えました。"
                 )
                 yield f"data: {event.model_dump_json(exclude_none=True, by_alias=True)}\n\n"
                 yield "data: [DONE]\n\n"
@@ -290,10 +263,15 @@ def _terminal_event(kind: str, turn_id: str, message: str) -> AdkEvent:
     )
 
 
-def create_adk_app(*, settings: Settings | None = None) -> FastAPI:
+def create_adk_app(
+    *,
+    settings: Settings | None = None,
+    workflow: ResearchWorkflow | None = None,
+) -> FastAPI:
     configured = settings or get_settings()
     configure_otel()
-    workflow = build_workflow(configured)
+    owned_workflow = workflow is None
+    research_workflow = workflow or build_workflow(configured)
     registry = AdkRunRegistry()
     project_path = (
         f"{configured.wandb_entity}/{configured.wandb_project}"
@@ -308,7 +286,8 @@ def create_adk_app(*, settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
-        await workflow.close()
+        if owned_workflow:
+            await research_workflow.close()
 
     from google.adk.cli.fast_api import get_fast_api_app
 
@@ -316,7 +295,14 @@ def create_adk_app(*, settings: Settings | None = None) -> FastAPI:
     agents_dir.mkdir(parents=True, exist_ok=True)
     adk_app = get_fast_api_app(
         agents_dir=str(agents_dir),
-        agent_loader=build_agent_loader(workflow, registry),
+        agent_loader=build_agent_loader(
+            research_workflow,
+            registry,
+            deadline_seconds=configured.turn_deadline_seconds,
+            runtime_mode=configured.runtime_mode,
+            prompt_version=configured.prompt_version,
+            corpus_version=configured.corpus_version,
+        ),
         session_service_uri=(
             f"sqlite+aiosqlite:///{configured.session_database_path.resolve().as_posix()}"
         ),
@@ -332,7 +318,7 @@ def create_adk_app(*, settings: Settings | None = None) -> FastAPI:
     async def health() -> HealthResponse:
         return HealthResponse(
             runtime_mode=configured.runtime_mode,
-            corpus_documents=workflow.corpus_document_count,
+            corpus_documents=research_workflow.corpus_document_count,
             tracing_export_enabled=bool(os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")),
         )
 

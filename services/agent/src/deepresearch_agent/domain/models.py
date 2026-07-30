@@ -168,6 +168,7 @@ class RunManifest(BaseModel):
     flags: list[str]
     citation_count: int
     source_count: int
+    finish_reason: Literal["stop", "cancelled", "timeout", "error"] = "stop"
     started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
 
