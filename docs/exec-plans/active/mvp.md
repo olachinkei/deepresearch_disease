@@ -46,7 +46,7 @@
 - [x] conversation groupingとtoken usageを実W&Bで確認する。
 - [x] 最小pluginでcustom属性をroot spanへ追加する。
 - [x] raw message / tool content captureが無効であることをpayload testで確認する。
-- [x] `input.value` / `output.value` flagのon / offを確認する。
+- [x] `input.value` / `output.value` の独立flag、全組合せ、server-owned分類を確認する。
 - [x] `app.turn_id` から実Agent turn traceを検索し、feedbackを同期する。
 - [ ] Agents Signalsの対象条件と出力を確認する。
 - [x] spike結果をADRまたは実行記録へ残す。
@@ -241,5 +241,6 @@
 
 - [ ] 社内PDF ingestion
 - [ ] 社内excerptのGemini送信
-- [ ] 質問・回答のW&B送信
+- [ ] 質問のW&B `input.value` 送信
+- [ ] 最終回答のW&B `output.value` 送信
 - [ ] 機密標的仮説のExa送信

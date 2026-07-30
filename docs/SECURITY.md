@@ -34,13 +34,21 @@ MVPで解決しない脅威:
 
 | 分類 | 例 | 既定の扱い |
 | --- | --- | --- |
-| Public | 公開論文メタデータ、OA本文、合成query | 承認済み外部APIへ送信可 |
+| Public | 公開論文メタデータ、OA本文、明示確認済みの公開query | 承認済み外部APIへ送信可 |
+| Synthetic | 固定された合成query、合成fixture | 承認済み外部APIへ送信可 |
 | User-local | 表示名、会話一覧、feedback | Web DB内。外部送信は最小化 |
 | Research-sensitive | 未公開標的仮説、質問、最終回答 | 明示承認まで外部送信不可 |
 | Internal document | 社内PDF、内部excerpt、manifest | ingestionと外部送信を既定で禁止 |
 | Secret | API key、Cookie署名鍵、HMAC鍵 | server環境変数のみ。保存・表示・trace禁止 |
 
 公開論文であっても、ライセンスが不明な本文は保存しない。
+
+trace contentの分類はserver-owned policyで決める。正規化済みの質問、target、
+mechanism、disease、research question全体からserverがSHA-256 fingerprintを作り、
+server設定のPublicまたはSynthetic allowlistと完全一致した入力だけをその分類として
+扱う。未登録入力はtargetが空でも `research-sensitive` とし、client metadataや本文の
+自己申告で分類を緩和しない。Internal Evidenceが1件でも採択された出力は `internal`
+とする。
 
 ## 4. 外部送信matrix
 
@@ -67,6 +75,19 @@ MVPで解決しない脅威:
 - Research-sensitive queryのExa送信
 - 質問のW&B `input.value` 送信
 - 最終回答のW&B `output.value` 送信
+
+W&B trace contentには次の独立flagとserver-owned allowlistを使用する。
+
+- `AGENT_TRACE_INPUT_CONTENT_ENABLED`
+- `AGENT_TRACE_OUTPUT_CONTENT_ENABLED`
+- `AGENT_TRACE_PUBLIC_INPUT_FINGERPRINTS`
+- `AGENT_TRACE_SYNTHETIC_INPUT_FINGERPRINTS`
+
+fingerprint allowlistはJSON配列で指定し、各値をlowercase SHA-256とする。Publicと
+Syntheticの両方に同じfingerprintを登録してはならない。旧
+`AGENT_TRACE_CONTENT_ENABLED` と
+`AGENT_TRACE_RESEARCH_HYPOTHESES_ENABLED` は廃止し、`true` のまま起動した場合は
+fail closedとする。
 
 要件:
 
@@ -185,7 +206,10 @@ OTLP root spanへ送信できる情報:
 - API key
 - stack dumpに含まれるrequest body
 
-質問と最終回答の `input.value` / `output.value` は個別承認とfeature flagがある環境だけで送る。
+質問の `input.value` と最終回答の `output.value` は、それぞれの個別承認と独立
+feature flagがある環境だけで送る。flagが有効でも、入力全体のfingerprintが
+Public/Synthetic allowlistに一致しない場合は送らない。Internal Evidenceを含む出力も
+送らない。分類名は本文を含まない決定的属性として記録できる。
 
 通常ログはID、件数、status、error classを中心にし、本文を避ける。trace分析はserver-side filterで絞り、集約表だけをLLMへ渡す。
 
@@ -245,6 +269,10 @@ production pilot前に、保持期間、削除責任者、backup、W&B側のrete
 - 社内excerptが未承認時にGemini、Exa、W&Bへ送られない。
 - tool responseとsecretがSSE、log、OTLPに含まれない。
 - 未設定のfeature flagが無効になる。
+- input/output trace flagの全組合せが独立して機能する。
+- targetが空の機密questionをResearch-sensitiveとしてW&Bへ送らない。
+- Public/Synthetic入力でもInternal Evidenceを含む出力をW&Bへ送らない。
+- client入力だけでtrace data classificationを緩和できない。
 - Cookie改ざんが拒否される。
 - prompt injectionを含むPDF / Web本文で命令を実行しない。
 - scope外疾患を通常調査しない。

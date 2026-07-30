@@ -22,10 +22,15 @@ from deepresearch_agent.infrastructure.feedback import (
 from deepresearch_agent.observability.flag_analysis import fetch_flagged_rows
 from deepresearch_agent.observability.otel import (
     PrivacyConfigurationError,
+    TraceDataClassification,
+    classify_trace_input,
+    classify_trace_output,
     pseudonymize_user,
     set_safe_span_attributes,
     trace_content_attributes,
+    trace_input_fingerprint,
 )
+from deepresearch_agent.settings import Settings
 
 
 class FakeFeedbackBackend:
@@ -204,31 +209,154 @@ def test_exported_span_contains_only_allowlisted_non_content_metadata() -> None:
         set_safe_span_attributes({"app.display_name": "Display Name"})
 
 
-def test_trace_content_is_public_only_and_feature_flagged() -> None:
+@pytest.mark.parametrize(
+    ("input_enabled", "output_enabled", "expected"),
+    [
+        (False, False, {}),
+        (True, False, {"input.value": "synthetic q"}),
+        (False, True, {"output.value": "synthetic a"}),
+        (
+            True,
+            True,
+            {
+                "input.value": "synthetic q",
+                "output.value": "synthetic a",
+            },
+        ),
+    ],
+)
+def test_trace_input_and_output_flags_are_independent(
+    input_enabled: bool,
+    output_enabled: bool,
+    expected: dict[str, str],
+) -> None:
     assert (
         trace_content_attributes(
-            enabled=False,
-            data_classification="public",
-            question="q",
-            answer="a",
+            input_enabled=input_enabled,
+            output_enabled=output_enabled,
+            input_classification=TraceDataClassification.SYNTHETIC,
+            output_classification=TraceDataClassification.SYNTHETIC,
+            question="synthetic q",
+            answer="synthetic a",
         )
-        == {}
+        == expected
+    )
+
+
+def test_trace_classification_uses_exact_server_owned_fingerprint() -> None:
+    confidential_fingerprint = trace_input_fingerprint(
+        question="Confidential unpublished hypothesis",
+        target_molecule=None,
+        mechanism=None,
+        disease="ischemic stroke",
+        research_question="Confidential unpublished hypothesis",
+    )
+    synthetic_fingerprint = trace_input_fingerprint(
+        question="Fixed synthetic question",
+        target_molecule="MMP9",
+        mechanism="inhibition",
+        disease="ischemic stroke",
+        research_question="Fixed synthetic question",
+    )
+
+    assert (
+        classify_trace_input(
+            fingerprint=confidential_fingerprint,
+            public_fingerprints=frozenset(),
+            synthetic_fingerprints=frozenset({synthetic_fingerprint}),
+        )
+        == TraceDataClassification.RESEARCH_SENSITIVE
     )
     assert (
-        trace_content_attributes(
-            enabled=True,
-            data_classification="internal",
-            question="internal question",
-            answer="internal answer",
+        classify_trace_input(
+            fingerprint=synthetic_fingerprint,
+            public_fingerprints=frozenset(),
+            synthetic_fingerprints=frozenset({synthetic_fingerprint}),
         )
-        == {}
+        == TraceDataClassification.SYNTHETIC
     )
+    assert trace_input_fingerprint(
+        question="Fixed synthetic question",
+        target_molecule="CONFIDENTIAL-TARGET",
+        mechanism="inhibition",
+        disease="ischemic stroke",
+        research_question="Fixed synthetic question",
+    ) != synthetic_fingerprint
+
+
+def test_internal_evidence_blocks_output_but_not_allowlisted_input() -> None:
+    output_classification = classify_trace_output(
+        input_classification=TraceDataClassification.PUBLIC,
+        has_internal_evidence=True,
+    )
+
+    assert output_classification == TraceDataClassification.INTERNAL
     assert trace_content_attributes(
-        enabled=True,
-        data_classification="synthetic",
-        question="synthetic q",
-        answer="synthetic a",
-    ) == {"input.value": "synthetic q", "output.value": "synthetic a"}
+        input_enabled=True,
+        output_enabled=True,
+        input_classification=TraceDataClassification.PUBLIC,
+        output_classification=output_classification,
+        question="Approved public question",
+        answer="Answer containing internal excerpt",
+    ) == {"input.value": "Approved public question"}
+
+
+def test_trace_content_settings_default_closed_and_reject_legacy_enablement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(_env_file=None)
+    assert settings.trace_input_content_enabled is False
+    assert settings.trace_output_content_enabled is False
+    assert settings.trace_public_input_fingerprints == frozenset()
+    assert settings.trace_synthetic_input_fingerprints == frozenset()
+
+    monkeypatch.setenv("AGENT_TRACE_CONTENT_ENABLED", "true")
+    with pytest.raises(
+        ValueError,
+        match="AGENT_TRACE_CONTENT_ENABLED was removed",
+    ):
+        Settings(_env_file=None)
+
+
+def test_trace_content_settings_validate_server_allowlists(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fingerprint = "a" * 64
+    monkeypatch.setenv(
+        "AGENT_TRACE_PUBLIC_INPUT_FINGERPRINTS",
+        json.dumps([fingerprint]),
+    )
+    settings = Settings(_env_file=None)
+    assert settings.trace_public_input_fingerprints == frozenset({fingerprint})
+
+    monkeypatch.setenv(
+        "AGENT_TRACE_SYNTHETIC_INPUT_FINGERPRINTS",
+        json.dumps([fingerprint]),
+    )
+    with pytest.raises(
+        ValueError,
+        match="cannot be both public and synthetic",
+    ):
+        Settings(_env_file=None)
+
+    monkeypatch.delenv("AGENT_TRACE_PUBLIC_INPUT_FINGERPRINTS")
+    monkeypatch.setenv("AGENT_TRACE_SYNTHETIC_INPUT_FINGERPRINTS", '["not-a-hash"]')
+    with pytest.raises(
+        ValueError,
+        match="lowercase SHA-256",
+    ):
+        Settings(_env_file=None)
+
+
+def test_removed_research_hypothesis_trace_flag_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AGENT_TRACE_RESEARCH_HYPOTHESES_ENABLED", "true")
+    with pytest.raises(
+        ValueError,
+        match="AGENT_TRACE_RESEARCH_HYPOTHESES_ENABLED was removed",
+    ):
+        Settings(_env_file=None)
 
 
 def test_otlp_http_exporter_sends_protobuf_without_sensitive_content() -> None:
@@ -254,9 +382,25 @@ def test_otlp_http_exporter_sends_protobuf_without_sensitive_content() -> None:
         provider = TracerProvider()
         provider.add_span_processor(SimpleSpanProcessor(exporter))
         tracer = provider.get_tracer("otlp-integration-test")
-        with tracer.start_as_current_span("invoke_agent synthetic") as span:
-            span.set_attribute("app.turn_id", "turn-synthetic")
-            span.set_attribute("app.user_hash", pseudonymize_user("Display Name", "secret"))
+        with tracer.start_as_current_span("invoke_agent synthetic"):
+            set_safe_span_attributes(
+                {
+                    "app.turn_id": "turn-synthetic",
+                    "app.user_hash": pseudonymize_user("Display Name", "secret"),
+                    "app.input_data_classification": "research-sensitive",
+                    "app.output_data_classification": "internal",
+                    **trace_content_attributes(
+                        input_enabled=True,
+                        output_enabled=True,
+                        input_classification=(
+                            TraceDataClassification.RESEARCH_SENSITIVE
+                        ),
+                        output_classification=TraceDataClassification.INTERNAL,
+                        question="confidential hypothesis",
+                        answer="internal excerpt",
+                    ),
+                }
+            )
         provider.shutdown()
     finally:
         server.shutdown()
@@ -270,4 +414,6 @@ def test_otlp_http_exporter_sends_protobuf_without_sensitive_content() -> None:
     assert "turn-synthetic" in serialized
     assert "Display Name" not in serialized
     assert "secret" not in serialized
+    assert "confidential hypothesis" not in serialized
+    assert "internal excerpt" not in serialized
     assert "tool raw response" not in serialized

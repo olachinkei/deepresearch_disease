@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any
 
 from opentelemetry import trace
@@ -33,6 +35,8 @@ _SAFE_ATTRIBUTE_KEYS = frozenset(
         "app.citation_count",
         "app.source_count",
         "app.flags_csv",
+        "app.input_data_classification",
+        "app.output_data_classification",
         "gen_ai.operation.name",
         "gen_ai.agent.name",
         "gen_ai.conversation.id",
@@ -44,6 +48,15 @@ _SAFE_ATTRIBUTE_KEYS = frozenset(
 
 class PrivacyConfigurationError(RuntimeError):
     """Unsafe ADK telemetry configuration was supplied."""
+
+
+class TraceDataClassification(StrEnum):
+    """Server-owned classification used to gate trace content."""
+
+    PUBLIC = "public"
+    SYNTHETIC = "synthetic"
+    INTERNAL = "internal"
+    RESEARCH_SENSITIVE = "research-sensitive"
 
 
 def enforce_privacy_environment() -> None:
@@ -112,13 +125,74 @@ def set_safe_span_attributes(values: Mapping[str, Any]) -> None:
             span.set_attribute(key, value)
 
 
+def trace_input_fingerprint(
+    *,
+    question: str,
+    target_molecule: str | None,
+    mechanism: str | None,
+    disease: str,
+    research_question: str,
+) -> str:
+    """Fingerprint the complete normalized request without exporting its content."""
+
+    canonical = json.dumps(
+        {
+            "disease": disease,
+            "mechanism": mechanism,
+            "question": question,
+            "research_question": research_question,
+            "target_molecule": target_molecule,
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def classify_trace_input(
+    *,
+    fingerprint: str,
+    public_fingerprints: frozenset[str],
+    synthetic_fingerprints: frozenset[str],
+) -> TraceDataClassification:
+    """Classify only exact server-approved inputs; unknown inputs stay sensitive."""
+
+    if fingerprint in synthetic_fingerprints:
+        return TraceDataClassification.SYNTHETIC
+    if fingerprint in public_fingerprints:
+        return TraceDataClassification.PUBLIC
+    return TraceDataClassification.RESEARCH_SENSITIVE
+
+
+def classify_trace_output(
+    *,
+    input_classification: TraceDataClassification,
+    has_internal_evidence: bool,
+) -> TraceDataClassification:
+    """Prevent an otherwise allow-listed request from exporting internal evidence."""
+
+    if has_internal_evidence:
+        return TraceDataClassification.INTERNAL
+    return input_classification
+
+
 def trace_content_attributes(
     *,
-    enabled: bool,
-    data_classification: str,
+    input_enabled: bool,
+    output_enabled: bool,
+    input_classification: TraceDataClassification,
+    output_classification: TraceDataClassification,
     question: str,
     answer: str,
 ) -> dict[str, str]:
-    if not enabled or data_classification not in {"public", "synthetic"}:
-        return {}
-    return {"input.value": question, "output.value": answer}
+    exportable = {
+        TraceDataClassification.PUBLIC,
+        TraceDataClassification.SYNTHETIC,
+    }
+    attributes: dict[str, str] = {}
+    if input_enabled and input_classification in exportable:
+        attributes["input.value"] = question
+    if output_enabled and output_classification in exportable:
+        attributes["output.value"] = answer
+    return attributes
