@@ -3,6 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
+  // The suites share one mock agent and one SQLite database. Keep files serial
+  // so cancellation and feedback state cannot race across workers.
+  workers: 1,
   retries: 0,
   use: {
     baseURL: "http://127.0.0.1:5173",

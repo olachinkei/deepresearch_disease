@@ -164,7 +164,10 @@ export default function Home() {
     data.active?.feedbackByTurn ?? {},
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileNavigation, setMobileNavigation] = useState(false);
   const abortController = useRef<AbortController | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setActive(data.active);
@@ -172,6 +175,35 @@ export default function Home() {
     setFeedbackByTurn(data.active?.feedbackByTurn ?? {});
     setError(undefined);
   }, [data.active]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 880px)");
+    const update = () => {
+      setMobileNavigation(media.matches);
+      if (!media.matches) {
+        setSidebarOpen(false);
+      }
+    };
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!mobileNavigation || !sidebarOpen) {
+      return;
+    }
+    sidebarRef.current?.querySelector<HTMLElement>("a")?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+      setSidebarOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [mobileNavigation, sidebarOpen]);
 
   function updateTurn(turnId: string, update: Partial<TurnStatusView>) {
     setActive((current) =>
@@ -451,9 +483,12 @@ export default function Home() {
             </div>
           ) : null}
           <button
+            aria-controls="research-history-sidebar"
+            aria-expanded={sidebarOpen}
             aria-label={sidebarOpen ? "履歴を閉じる" : "履歴を開く"}
             className="mobile-menu"
             onClick={() => setSidebarOpen((current) => !current)}
+            ref={menuButtonRef}
             type="button"
           >
             {sidebarOpen ? <X aria-hidden /> : <Menu aria-hidden />}
@@ -462,7 +497,13 @@ export default function Home() {
       </header>
 
       <div className="app-body">
-        <div className={sidebarOpen ? "sidebar-wrap sidebar-wrap-open" : "sidebar-wrap"}>
+        <div
+          aria-hidden={mobileNavigation && !sidebarOpen}
+          className={sidebarOpen ? "sidebar-wrap sidebar-wrap-open" : "sidebar-wrap"}
+          id="research-history-sidebar"
+          inert={mobileNavigation && !sidebarOpen}
+          ref={sidebarRef}
+        >
           <ConversationSidebar
             activeConversationId={active?.conversation.id}
             conversations={data.conversations}

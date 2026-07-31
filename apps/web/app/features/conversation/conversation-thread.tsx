@@ -91,7 +91,7 @@ export function ConversationThread({
         </div>
       </header>
 
-      <div className="transcript" aria-live="polite">
+      <div className="transcript">
         {messages.map((message) => (
           <Fragment key={message.id}>
             {message.role === "user" ? (
@@ -162,7 +162,12 @@ export function ConversationThread({
             <div className="message-content">
               <span className="message-author">Research agent</span>
               <div className="research-progress">
-                <div className="progress-label">
+                <div
+                  aria-atomic="true"
+                  aria-live="polite"
+                  className="progress-label"
+                  role="status"
+                >
                   <span>{progress ?? "調査を準備しています…"}</span>
                   <span className="pulse-dots" aria-hidden>
                     <i />
@@ -171,7 +176,7 @@ export function ConversationThread({
                   </span>
                 </div>
                 {streamingAnswer ? (
-                  <div className="markdown">
+                  <div aria-label="生成中の回答" className="markdown">
                     <ReactMarkdown>{streamingAnswer}</ReactMarkdown>
                   </div>
                 ) : (
