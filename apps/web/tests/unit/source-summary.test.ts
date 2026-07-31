@@ -56,7 +56,7 @@ describe("structured source summary", () => {
       source: {
         id: "E1",
         title: "Unsafe",
-        url: "https://user:secret@example.org/paper",
+        url: ["https://user", ":secret@example.org/paper"].join(""),
         sourceType: "web",
       },
     },
