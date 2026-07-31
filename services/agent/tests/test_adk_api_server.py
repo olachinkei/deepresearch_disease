@@ -107,6 +107,18 @@ async def test_google_adk_api_server_openapi_sse_and_session_state(
         "answer_delta",
         "completed",
     ]
+    assert [event["customMetadata"]["event_sequence"] for event in events] == [
+        0,
+        1,
+        2,
+        3,
+        4,
+    ]
+    assert all(
+        event["customMetadata"]["conversation_id"] == "synthetic-conversation"
+        for event in events
+    )
+    assert len({event["id"] for event in events}) == len(events)
     manifest = events[-1]["customMetadata"]["manifest"]
     assert manifest["model_id"] == GENERATION_MODEL_ID
     assert manifest["prompt_version"] == SYNTHESIS_PROMPT_VERSION

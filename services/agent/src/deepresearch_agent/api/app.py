@@ -117,6 +117,7 @@ def create_app(
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
         async def stream() -> AsyncIterator[str]:
+            event_sequence = 0
             try:
                 async with asyncio.timeout(configured.turn_deadline_seconds):
                     async for workflow_event in research_workflow.run(
@@ -132,23 +133,44 @@ def create_app(
                     ):
                         if await request.is_disconnected():
                             cancel_event.set()
-                        event = _to_adk_event(workflow_event)
+                        event = _to_adk_event(
+                            workflow_event,
+                            conversation_id=metadata.conversation_id,
+                            sequence=event_sequence,
+                        )
+                        event_sequence += 1
                         yield (
                             f"data: {event.model_dump_json(exclude_none=True, by_alias=True)}\n\n"
                         )
                 yield "data: [DONE]\n\n"
             except asyncio.CancelledError:
-                event = _terminal_event("cancelled", metadata.turn_id, "調査を中止しました。")
+                event = _terminal_event(
+                    "cancelled",
+                    metadata.turn_id,
+                    metadata.conversation_id,
+                    event_sequence,
+                    "調査を中止しました。",
+                )
                 yield f"data: {event.model_dump_json(exclude_none=True, by_alias=True)}\n\n"
                 yield "data: [DONE]\n\n"
             except (ScopeError, ValueError) as exc:
-                event = _terminal_event("error", metadata.turn_id, str(exc))
+                event = _terminal_event(
+                    "error",
+                    metadata.turn_id,
+                    metadata.conversation_id,
+                    event_sequence,
+                    str(exc),
+                )
                 yield f"data: {event.model_dump_json(exclude_none=True, by_alias=True)}\n\n"
                 yield "data: [DONE]\n\n"
             except TimeoutError:
                 cancel_event.set()
                 event = _terminal_event(
-                    "error", metadata.turn_id, "調査が実行時間の上限を超えました。"
+                    "error",
+                    metadata.turn_id,
+                    metadata.conversation_id,
+                    event_sequence,
+                    "調査が実行時間の上限を超えました。",
                 )
                 yield f"data: {event.model_dump_json(exclude_none=True, by_alias=True)}\n\n"
                 yield "data: [DONE]\n\n"
@@ -156,6 +178,8 @@ def create_app(
                 event = _terminal_event(
                     "error",
                     metadata.turn_id,
+                    metadata.conversation_id,
+                    event_sequence,
                     "Agent execution failed. See server logs for the correlation turn ID.",
                 )
                 yield f"data: {event.model_dump_json(exclude_none=True, by_alias=True)}\n\n"
@@ -183,18 +207,26 @@ def create_app(
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         events: list[AdkEvent] = []
         try:
-            async for workflow_event in research_workflow.run(
-                user_id=payload.user_id,
-                conversation_id=metadata.conversation_id,
-                turn_id=metadata.turn_id,
-                question=payload.question,
-                target_molecule=metadata.target_molecule,
-                mechanism=metadata.mechanism,
-                disease=metadata.disease,
-                research_question=metadata.research_question,
-                cancel_event=cancel_event,
+            async for sequence, workflow_event in _enumerate_async(
+                research_workflow.run(
+                    user_id=payload.user_id,
+                    conversation_id=metadata.conversation_id,
+                    turn_id=metadata.turn_id,
+                    question=payload.question,
+                    target_molecule=metadata.target_molecule,
+                    mechanism=metadata.mechanism,
+                    disease=metadata.disease,
+                    research_question=metadata.research_question,
+                    cancel_event=cancel_event,
+                )
             ):
-                events.append(_to_adk_event(workflow_event))
+                events.append(
+                    _to_adk_event(
+                        workflow_event,
+                        conversation_id=metadata.conversation_id,
+                        sequence=sequence,
+                    )
+                )
         finally:
             await registry.finish(metadata.turn_id)
         return events
@@ -217,7 +249,12 @@ def create_app(
     return app
 
 
-def _to_adk_event(event: WorkflowEvent) -> AdkEvent:
+def _to_adk_event(
+    event: WorkflowEvent,
+    *,
+    conversation_id: str,
+    sequence: int,
+) -> AdkEvent:
     text = event.delta or event.message
     if event.kind == "completed" and event.result:
         text = event.result.answer_markdown
@@ -229,6 +266,8 @@ def _to_adk_event(event: WorkflowEvent) -> AdkEvent:
     metadata: dict[str, Any] = {
         "kind": event.kind,
         "turn_id": event.turn_id,
+        "conversation_id": conversation_id,
+        "event_sequence": sequence,
         **event.details,
     }
     if event.result:
@@ -256,13 +295,33 @@ def _to_adk_event(event: WorkflowEvent) -> AdkEvent:
     )
 
 
-def _terminal_event(kind: str, turn_id: str, message: str) -> AdkEvent:
+def _terminal_event(
+    kind: str,
+    turn_id: str,
+    conversation_id: str,
+    sequence: int,
+    message: str,
+) -> AdkEvent:
     return AdkEvent(
         id=uuid4().hex,
         content=AdkContent(role="model", parts=[MessagePart(text=message)]),
         turn_complete=True,
-        custom_metadata={"kind": kind, "turn_id": turn_id},
+        custom_metadata={
+            "kind": kind,
+            "turn_id": turn_id,
+            "conversation_id": conversation_id,
+            "event_sequence": sequence,
+        },
     )
+
+
+async def _enumerate_async(
+    iterator: AsyncIterator[WorkflowEvent],
+) -> AsyncIterator[tuple[int, WorkflowEvent]]:
+    sequence = 0
+    async for item in iterator:
+        yield sequence, item
+        sequence += 1
 
 
 def create_adk_app(

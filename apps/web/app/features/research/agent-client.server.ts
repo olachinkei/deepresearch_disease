@@ -96,10 +96,38 @@ function safeCount(value: unknown) {
     : undefined;
 }
 
-function eventContext(context: { conversationId: string; turnId: string }) {
+function safeSequence(value: unknown) {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0
+    ? value
+    : undefined;
+}
+
+function eventContext(
+  event: UpstreamEvent,
+  metadata: Record<string, unknown>,
+  context: { conversationId: string; turnId: string },
+) {
+  const sequence = safeSequence(
+    metadata.event_sequence ?? metadata.eventSequence,
+  );
+  if (
+    !event.id ||
+    !/^[A-Za-z0-9_.:-]{1,128}$/u.test(event.id) ||
+    sequence === undefined ||
+    metadata.turn_id !== context.turnId ||
+    metadata.conversation_id !== context.conversationId
+  ) {
+    return undefined;
+  }
   return {
-    schemaVersion: "1.0" as const,
-    ...context,
+    eventId: event.id,
+    sequence,
+    data: {
+      schemaVersion: "2.0" as const,
+      ...context,
+    },
   };
 }
 
@@ -120,11 +148,17 @@ export function sanitizeAgentEvent(
   const metadata = metadataOf(event);
   const kind = metadata.kind;
   const content = textOf(event);
+  const safeContext = eventContext(event, metadata, context);
+  if (!safeContext) {
+    return undefined;
+  }
 
   if (kind === "research_started") {
     return {
+      eventId: safeContext.eventId,
+      sequence: safeContext.sequence,
       type: "research_started",
-      data: eventContext(context),
+      data: safeContext.data,
     };
   }
   if (kind === "search_progress") {
@@ -132,9 +166,11 @@ export function sanitizeAgentEvent(
       metadata.source_count ?? metadata.sourceCount,
     );
     return {
+      eventId: safeContext.eventId,
+      sequence: safeContext.sequence,
       type: "search_progress",
       data: {
-        ...eventContext(context),
+        ...safeContext.data,
         stage: safeText(metadata.stage, "retrieval", 80),
         message: safeText(content, "論文を検索しています。", 300),
         ...(sourceCount === undefined ? {} : { sourceCount }),
@@ -143,9 +179,11 @@ export function sanitizeAgentEvent(
   }
   if (kind === "answer_delta" && content) {
     return {
+      eventId: safeContext.eventId,
+      sequence: safeContext.sequence,
       type: "answer_delta",
       data: {
-        ...eventContext(context),
+        ...safeContext.data,
         delta: content.slice(0, 20_000),
       },
     };
@@ -158,9 +196,11 @@ export function sanitizeAgentEvent(
       metadata.source_summary ?? metadata.sourceSummary ?? metadata.sources,
     );
     return {
+      eventId: safeContext.eventId,
+      sequence: safeContext.sequence,
       type: "completed",
       data: {
-        ...eventContext(context),
+        ...safeContext.data,
         answerMarkdown: content.slice(0, 150_000),
         ...(sourceCount === undefined ? {} : { sourceCount }),
         ...(sourceSummary === undefined ? {} : { sourceSummary }),
@@ -169,18 +209,22 @@ export function sanitizeAgentEvent(
   }
   if (kind === "cancelled") {
     return {
+      eventId: safeContext.eventId,
+      sequence: safeContext.sequence,
       type: "cancelled",
       data: {
-        ...eventContext(context),
+        ...safeContext.data,
         message: "調査をキャンセルしました。",
       },
     };
   }
   if (kind === "error") {
     return {
+      eventId: safeContext.eventId,
+      sequence: safeContext.sequence,
       type: "error",
       data: {
-        ...eventContext(context),
+        ...safeContext.data,
         code: "internal_error",
         message: "調査中にエラーが発生しました。",
         retryable: true,
@@ -244,7 +288,10 @@ export class HttpAgentClient implements AgentClient {
       );
     }
 
-    let receivedProtocolEvent = false;
+    const seenEventIds = new Set<string>();
+    let expectedSequence = 0;
+    let started = false;
+    let terminal = false;
     for await (const frame of parseSseStream(response.body)) {
       if (frame.data === "[DONE]") {
         break;
@@ -253,19 +300,40 @@ export class HttpAgentClient implements AgentClient {
       try {
         raw = JSON.parse(frame.data) as unknown;
       } catch {
+        throw new AgentProtocolError();
+      }
+      const parsedRaw = upstreamEventSchema.safeParse(raw);
+      if (!parsedRaw.success) {
+        throw new AgentProtocolError();
+      }
+      if (parsedRaw.data.id && seenEventIds.has(parsedRaw.data.id)) {
+        continue;
+      }
+      if (terminal) {
         continue;
       }
       const event = sanitizeAgentEvent(raw, {
         conversationId: input.conversationId,
         turnId: input.turnId,
       });
-      if (event) {
-        receivedProtocolEvent = true;
-        yield event;
+      if (!event || event.sequence !== expectedSequence) {
+        throw new AgentProtocolError();
       }
+      if (!started) {
+        if (event.type !== "research_started" || event.sequence !== 0) {
+          throw new AgentProtocolError();
+        }
+        started = true;
+      } else if (event.type === "research_started") {
+        throw new AgentProtocolError();
+      }
+      seenEventIds.add(event.eventId);
+      expectedSequence += 1;
+      terminal = ["completed", "cancelled", "error"].includes(event.type);
+      yield event;
     }
 
-    if (!receivedProtocolEvent && !signal.aborted) {
+    if ((!started || !terminal) && !signal.aborted) {
       throw new AgentProtocolError();
     }
   }

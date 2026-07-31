@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AgentProtocolError,
   AgentUnavailableError,
   getAgentServiceUrl,
   HttpAgentClient,
@@ -10,11 +11,26 @@ import {
 const conversationId = "d1aa5d43-f676-4f17-8028-f6f948745d6f";
 const turnId = "2fc923fd-8779-4e43-8b2b-e6a1533b721b";
 
-function sseResponse(events: unknown[]) {
+function sseResponse(events: unknown[], includeDone = true) {
   const body = events
-    .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+    .map((raw, sequence) => {
+      const event = raw as {
+        id?: string;
+        customMetadata?: Record<string, unknown>;
+      };
+      return `data: ${JSON.stringify({
+        ...event,
+        id: event.id ?? `agent-event-${sequence}`,
+        customMetadata: {
+          conversation_id: conversationId,
+          turn_id: turnId,
+          event_sequence: sequence,
+          ...event.customMetadata,
+        },
+      })}\n\n`;
+    })
     .join("")
-    .concat("data: [DONE]\n\n");
+    .concat(includeDone ? "data: [DONE]\n\n" : "");
   return new Response(body, {
     headers: { "content-type": "text/event-stream" },
   });
@@ -39,6 +55,10 @@ describe("HttpAgentClient", () => {
     const mockFetch: typeof fetch = async (_input, init) => {
       requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
       return sseResponse([
+        {
+          author: "deepresearch_agent",
+          customMetadata: { kind: "research_started" },
+        },
         {
           author: "deepresearch_agent",
           partial: true,
@@ -126,6 +146,78 @@ describe("HttpAgentClient", () => {
     ).toBeUndefined();
   });
 
+  it("deduplicates event IDs and requires an ordered terminal stream", async () => {
+    const duplicate = {
+      id: "agent-event-1",
+      content: { parts: [{ text: "検索中" }] },
+      customMetadata: {
+        kind: "search_progress",
+        event_sequence: 1,
+        stage: "retrieval",
+      },
+    };
+    const client = new HttpAgentClient("http://agent.test", async () =>
+      sseResponse([
+        { customMetadata: { kind: "research_started" } },
+        duplicate,
+        duplicate,
+        {
+          id: "agent-event-2",
+          content: { parts: [{ text: "# 結論" }] },
+          customMetadata: { kind: "completed", event_sequence: 2 },
+        },
+      ]),
+    );
+
+    const events = await collectEvents(client);
+    expect(events.map((event) => event.type)).toEqual([
+      "research_started",
+      "search_progress",
+      "completed",
+    ]);
+  });
+
+  it.each([
+    {
+      name: "out-of-order sequence",
+      events: [
+        { customMetadata: { kind: "research_started" } },
+        {
+          customMetadata: {
+            kind: "search_progress",
+            event_sequence: 2,
+          },
+        },
+      ],
+    },
+    {
+      name: "turn mismatch",
+      events: [
+        { customMetadata: { kind: "research_started" } },
+        {
+          customMetadata: {
+            kind: "search_progress",
+            turn_id: "other-turn",
+          },
+        },
+      ],
+    },
+    {
+      name: "terminal-free truncation",
+      events: [
+        { customMetadata: { kind: "research_started" } },
+        { customMetadata: { kind: "search_progress" } },
+      ],
+    },
+  ])("rejects $name as an agent protocol error", async ({ events }) => {
+    const client = new HttpAgentClient("http://agent.test", async () =>
+      sseResponse(events, false),
+    );
+    await expect(collectEvents(client)).rejects.toBeInstanceOf(
+      AgentProtocolError,
+    );
+  });
+
   it("raises a typed unavailable error without leaking fetch errors", async () => {
     const client = new HttpAgentClient("http://offline", async () => {
       throw new Error("ECONNREFUSED with secret URL");
@@ -146,3 +238,20 @@ describe("HttpAgentClient", () => {
     await expect(collect()).rejects.toBeInstanceOf(AgentUnavailableError);
   });
 });
+
+async function collectEvents(client: HttpAgentClient) {
+  const events = [];
+  for await (const event of client.run(
+    {
+      userId: "internal-user-uuid",
+      conversationId,
+      turnId,
+      prompt: "synthetic prompt",
+      disease: "ischemic stroke",
+    },
+    new AbortController().signal,
+  )) {
+    events.push(event);
+  }
+  return events;
+}

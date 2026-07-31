@@ -73,6 +73,7 @@
 - [x] Web DB、ADK session DB、Corpus DBのmigrationを分離する。
 - [x] Google ADK API Server生成OpenAPIを契約の正として統合する
 - [x] 公開SSE unionとschema versionを定義する。
+- [x] SSE event ID、sequence、単一terminal、途中切断のstate machineを実装する。
 - [x] agent clientとSSE parserのcontract testを作る。
 - [x] 外部adapterのinterfaceとtest doubleを定義する。
 - [x] TypeScriptとPythonの品質gateを設定する。

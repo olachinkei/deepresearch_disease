@@ -105,3 +105,36 @@ test("cancel and sanitized agent error states", async ({ page }) => {
   await page.getByRole("button", { name: "調査を開始" }).click();
   await expect(page.getByText("調査中にエラーが発生しました。")).toBeVisible();
 });
+
+test("duplicate SSE frames are ignored without duplicating output", async ({
+  page,
+}) => {
+  await startResearch(page, "duplicate-frame");
+  await expect(
+    page.getByRole("heading", { name: "結論", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "結論", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    page.getByText("調査サービスに接続できませんでした。"),
+  ).toHaveCount(0);
+});
+
+for (const question of [
+  "truncated-stream",
+  "out-of-order",
+  "turn-mismatch",
+]) {
+  test(`SSE protocol violation is retryable and sanitized: ${question}`, async ({
+    page,
+  }) => {
+    await startResearch(page, question);
+    await expect(
+      page.getByText(
+        "調査サービスに接続できませんでした。もう一度お試しください。",
+      ),
+    ).toBeVisible();
+    await expect(page.getByText("mismatched event")).toHaveCount(0);
+  });
+}

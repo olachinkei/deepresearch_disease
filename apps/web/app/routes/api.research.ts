@@ -109,10 +109,15 @@ export async function action({ request }: Route.ActionArgs) {
     start(controller) {
       let streamOpen = true;
       let timedOut = false;
+      let nextPublicSequence = 0;
       const send = (event: PublicResearchEvent) => {
         if (!streamOpen) {
           return;
         }
+        if (event.sequence !== nextPublicSequence) {
+          throw new AgentProtocolError();
+        }
+        nextPublicSequence += 1;
         try {
           controller.enqueue(encoder.encode(encodePublicEvent(event)));
         } catch {
@@ -143,11 +148,16 @@ export async function action({ request }: Route.ActionArgs) {
         let sourceCount: number | undefined;
         let completed = false;
         const context = {
-          schemaVersion: "1.0" as const,
+          schemaVersion: "2.0" as const,
           conversationId: conversation.id,
           turnId: turn.turnId,
         };
-        send({ type: "research_started", data: context });
+        send({
+          eventId: crypto.randomUUID(),
+          sequence: 0,
+          type: "research_started",
+          data: context,
+        });
 
         try {
           for await (const event of agentClient.run(
@@ -198,6 +208,8 @@ export async function action({ request }: Route.ActionArgs) {
               });
               await conversationRepository.markCompleted(turn.turnId);
               send({
+                eventId: event.eventId,
+                sequence: event.sequence,
                 type: "completed",
                 data: {
                   ...context,
@@ -209,22 +221,32 @@ export async function action({ request }: Route.ActionArgs) {
                 },
               });
               completed = true;
-              break;
+              continue;
             }
             if (event.type === "cancelled") {
               await conversationRepository.markCancelled(turn.turnId);
-              send({ type: "cancelled", data: { ...context, message: event.data.message } });
+              send({
+                eventId: event.eventId,
+                sequence: event.sequence,
+                type: "cancelled",
+                data: { ...context, message: event.data.message },
+              });
               completed = true;
-              break;
+              continue;
             }
             if (event.type === "error") {
               await conversationRepository.markFailed(
                 turn.turnId,
                 event.data.code,
               );
-              send({ type: "error", data: { ...event.data, ...context } });
+              send({
+                eventId: event.eventId,
+                sequence: event.sequence,
+                type: "error",
+                data: { ...event.data, ...context },
+              });
               completed = true;
-              break;
+              continue;
             }
           }
 
@@ -232,9 +254,14 @@ export async function action({ request }: Route.ActionArgs) {
             throw new AgentProtocolError("Agent stream ended before completion.");
           }
         } catch (error) {
+          if (completed) {
+            return;
+          }
           if (upstreamController.signal.aborted && !timedOut) {
             await conversationRepository.markCancelled(turn.turnId);
             send({
+              eventId: crypto.randomUUID(),
+              sequence: nextPublicSequence,
               type: "cancelled",
               data: { ...context, message: "調査をキャンセルしました。" },
             });
@@ -249,6 +276,8 @@ export async function action({ request }: Route.ActionArgs) {
                 : "internal_error";
             await conversationRepository.markFailed(turn.turnId, code);
             send({
+              eventId: crypto.randomUUID(),
+              sequence: nextPublicSequence,
               type: "error",
               data: {
                 ...context,
