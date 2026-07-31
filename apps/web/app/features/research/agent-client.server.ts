@@ -69,6 +69,11 @@ export function getAgentServiceUrl() {
   return process.env.AGENT_SERVICE_URL ?? "http://127.0.0.1:8001";
 }
 
+function cancelTimeoutMilliseconds() {
+  const parsed = Number(process.env.AGENT_CANCEL_TIMEOUT_MS ?? 1_500);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1_500;
+}
+
 function metadataOf(event: UpstreamEvent) {
   return event.customMetadata ?? event.custom_metadata ?? {};
 }
@@ -342,7 +347,10 @@ export class HttpAgentClient implements AgentClient {
     try {
       const response = await this.fetchImplementation(
         `${this.baseUrl.replace(/\/$/u, "")}/runs/${encodeURIComponent(turnId)}/cancel`,
-        { method: "POST" },
+        {
+          method: "POST",
+          signal: AbortSignal.timeout(cancelTimeoutMilliseconds()),
+        },
       );
       return response.status === 204 || response.status === 404;
     } catch {

@@ -152,6 +152,31 @@ export async function action({ request }: Route.ActionArgs) {
           conversationId: conversation.id,
           turnId: turn.turnId,
         };
+        const sendCancelledTerminal = (eventId: string, sequence: number) => {
+          send({
+            eventId,
+            sequence,
+            type: "cancelled",
+            data: {
+              ...context,
+              message: "調査をキャンセルしました。",
+            },
+          });
+        };
+        const sendCancelledIfPersisted = async (
+          eventId: string,
+          sequence: number,
+        ) => {
+          const persisted = await conversationRepository.findTurnOwned(
+            turn.turnId,
+            identity.id,
+          );
+          if (persisted?.turn.status !== "cancelled") {
+            return false;
+          }
+          sendCancelledTerminal(eventId, sequence);
+          return true;
+        };
         send({
           eventId: crypto.randomUUID(),
           sequence: 0,
@@ -197,16 +222,24 @@ export async function action({ request }: Route.ActionArgs) {
               }
               answerMarkdown = finalAnswer;
               sourceCount = event.data.sourceCount ?? sourceCount;
-              await conversationRepository.appendAssistantMessage({
-                conversationId: conversation.id,
-                turnId: turn.turnId,
-                content: finalAnswer,
-                metadata: {
-                  sourceCount,
-                  sourceSummary: event.data.sourceSummary,
-                },
+              const transitioned =
+                await conversationRepository.completeRunningTurn({
+                  conversationId: conversation.id,
+                  turnId: turn.turnId,
+                  content: finalAnswer,
+                  metadata: {
+                    sourceCount,
+                    sourceSummary: event.data.sourceSummary,
+                  },
               });
-              await conversationRepository.markCompleted(turn.turnId);
+              if (!transitioned) {
+                await sendCancelledIfPersisted(
+                  event.eventId,
+                  event.sequence,
+                );
+                completed = true;
+                continue;
+              }
               send({
                 eventId: event.eventId,
                 sequence: event.sequence,
@@ -224,7 +257,18 @@ export async function action({ request }: Route.ActionArgs) {
               continue;
             }
             if (event.type === "cancelled") {
-              await conversationRepository.markCancelled(turn.turnId);
+              const transitioned =
+                await conversationRepository.cancelRunningTurn(turn.turnId);
+              const persisted = transitioned
+                ? undefined
+                : await conversationRepository.findTurnOwned(
+                    turn.turnId,
+                    identity.id,
+                  );
+              if (!transitioned && persisted?.turn.status !== "cancelled") {
+                completed = true;
+                continue;
+              }
               send({
                 eventId: event.eventId,
                 sequence: event.sequence,
@@ -235,10 +279,18 @@ export async function action({ request }: Route.ActionArgs) {
               continue;
             }
             if (event.type === "error") {
-              await conversationRepository.markFailed(
+              const transitioned = await conversationRepository.markFailed(
                 turn.turnId,
                 event.data.code,
               );
+              if (!transitioned) {
+                await sendCancelledIfPersisted(
+                  event.eventId,
+                  event.sequence,
+                );
+                completed = true;
+                continue;
+              }
               send({
                 eventId: event.eventId,
                 sequence: event.sequence,
@@ -258,13 +310,8 @@ export async function action({ request }: Route.ActionArgs) {
             return;
           }
           if (upstreamController.signal.aborted && !timedOut) {
-            await conversationRepository.markCancelled(turn.turnId);
-            send({
-              eventId: crypto.randomUUID(),
-              sequence: nextPublicSequence,
-              type: "cancelled",
-              data: { ...context, message: "調査をキャンセルしました。" },
-            });
+            await conversationRepository.cancelRunningTurn(turn.turnId);
+            sendCancelledTerminal(crypto.randomUUID(), nextPublicSequence);
           } else {
             const protocolError = error instanceof AgentProtocolError;
             const unavailable =
@@ -274,20 +321,30 @@ export async function action({ request }: Route.ActionArgs) {
               : unavailable
                 ? "agent_unavailable"
                 : "internal_error";
-            await conversationRepository.markFailed(turn.turnId, code);
-            send({
-              eventId: crypto.randomUUID(),
-              sequence: nextPublicSequence,
-              type: "error",
-              data: {
-                ...context,
-                code,
-                message: timedOut
-                  ? "調査が制限時間を超えました。もう一度お試しください。"
-                  : "調査サービスに接続できませんでした。もう一度お試しください。",
-                retryable: true,
-              },
-            });
+            const transitioned = await conversationRepository.markFailed(
+              turn.turnId,
+              code,
+            );
+            if (transitioned) {
+              send({
+                eventId: crypto.randomUUID(),
+                sequence: nextPublicSequence,
+                type: "error",
+                data: {
+                  ...context,
+                  code,
+                  message: timedOut
+                    ? "調査が制限時間を超えました。もう一度お試しください。"
+                    : "調査サービスに接続できませんでした。もう一度お試しください。",
+                  retryable: true,
+                },
+              });
+            } else {
+              await sendCancelledIfPersisted(
+                crypto.randomUUID(),
+                nextPublicSequence,
+              );
+            }
           }
         } finally {
           clearTimeout(timeout);

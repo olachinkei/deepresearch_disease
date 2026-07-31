@@ -14,6 +14,14 @@ export type TranscriptView = {
   createdAt: string;
 };
 
+export type TurnStatusView = {
+  id: string;
+  sequence: number;
+  status: "running" | "completed" | "cancelled" | "error";
+  errorCode: string | null;
+  retryable: boolean;
+};
+
 export type ActiveConversationView = {
   conversation: {
     id: string;
@@ -23,6 +31,7 @@ export type ActiveConversationView = {
     mechanism: string | null;
     researchQuestion: string | null;
   };
+  turns: TurnStatusView[];
   messages: TranscriptView[];
   feedbackByTurn: Record<string, FeedbackView>;
 };

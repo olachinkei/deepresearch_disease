@@ -21,7 +21,9 @@ import { ConversationThread } from "~/features/conversation/conversation-thread"
 import type {
   ActiveConversationView,
   TranscriptView,
+  TurnStatusView,
 } from "~/features/conversation/view-model";
+import { isRetryableTurnError } from "~/features/conversation/turn-state";
 import { FeedbackRepository } from "~/features/feedback/repository.server";
 import {
   feedbackViewSchema,
@@ -87,6 +89,16 @@ export async function loader({ request }: Route.LoaderArgs) {
             mechanism: active.conversation.mechanism,
             researchQuestion: active.conversation.researchQuestion,
           },
+          turns: active.turns.map((turn) => ({
+            id: turn.id,
+            sequence: turn.sequence,
+            status: turn.status,
+            errorCode: turn.errorCode,
+            retryable:
+              turn.status === "cancelled" ||
+              (turn.status === "error" &&
+                isRetryableTurnError(turn.errorCode)),
+          })),
           messages: active.messages.map((message) => ({
             id: message.id,
             turnId: message.turnId,
@@ -156,7 +168,21 @@ export default function Home() {
     setActive(data.active);
     setMessages(data.active?.messages ?? []);
     setFeedbackByTurn(data.active?.feedbackByTurn ?? {});
+    setError(undefined);
   }, [data.active]);
+
+  function updateTurn(turnId: string, update: Partial<TurnStatusView>) {
+    setActive((current) =>
+      current
+        ? {
+            ...current,
+            turns: current.turns.map((turn) =>
+              turn.id === turnId ? { ...turn, ...update } : turn,
+            ),
+          }
+        : current,
+    );
+  }
 
   async function runResearch(input: ResearchRequest) {
     setBusy(true);
@@ -165,7 +191,8 @@ export default function Home() {
     setStreamingAnswer("");
     const controller = new AbortController();
     abortController.current = controller;
-    let completedConversationId: string | undefined;
+    let terminalConversationId: string | undefined;
+    let startedTurnId: string | undefined;
 
     try {
       const response = await fetch("/api/research", {
@@ -185,6 +212,7 @@ export default function Home() {
 
       await consumeResearchStream(response, (event: PublicResearchEvent) => {
         if (event.type === "research_started") {
+          startedTurnId = event.data.turnId;
           setCurrentTurnId(event.data.turnId);
           const userMessage: TranscriptView = {
             id: `pending-user-${event.data.turnId}`,
@@ -194,8 +222,18 @@ export default function Home() {
             createdAt: new Date().toISOString(),
           };
           setMessages((current) => [...current, userMessage]);
-          if (!input.conversationId) {
-            setActive({
+          setActive((current) => {
+            const turn: TurnStatusView = {
+              id: event.data.turnId,
+              sequence: (current?.turns.at(-1)?.sequence ?? 0) + 1,
+              status: "running",
+              errorCode: null,
+              retryable: false,
+            };
+            if (current) {
+              return { ...current, turns: [...current.turns, turn] };
+            }
+            return {
               conversation: {
                 id: event.data.conversationId,
                 title: titleFor(input),
@@ -204,10 +242,11 @@ export default function Home() {
                 mechanism: input.mechanism ?? null,
                 researchQuestion: input.researchQuestion ?? null,
               },
+              turns: [turn],
               messages: [],
               feedbackByTurn: {},
-            });
-          }
+            };
+          });
           return;
         }
         if (event.type === "search_progress") {
@@ -220,7 +259,12 @@ export default function Home() {
           return;
         }
         if (event.type === "completed") {
-          completedConversationId = event.data.conversationId;
+          terminalConversationId = event.data.conversationId;
+          updateTurn(event.data.turnId, {
+            status: "completed",
+            errorCode: null,
+            retryable: false,
+          });
           setMessages((current) => [
             ...current,
             {
@@ -236,26 +280,49 @@ export default function Home() {
           return;
         }
         if (event.type === "cancelled") {
-          setError(event.data.message);
+          terminalConversationId = event.data.conversationId;
+          updateTurn(event.data.turnId, {
+            status: "cancelled",
+            errorCode: null,
+            retryable: true,
+          });
+          setStreamingAnswer("");
+          setProgress(undefined);
           return;
         }
-        setError(event.data.message);
+        terminalConversationId = event.data.conversationId;
+        updateTurn(event.data.turnId, {
+          status: "error",
+          errorCode: event.data.code,
+          retryable: event.data.retryable,
+        });
+        setStreamingAnswer("");
+        setProgress(undefined);
       });
     } catch (caught) {
       if (!controller.signal.aborted) {
-        setError(
+        const message =
           caught instanceof Error
             ? caught.message
-            : "調査中にエラーが発生しました。",
-        );
+            : "調査中にエラーが発生しました。";
+        if (startedTurnId) {
+          updateTurn(startedTurnId, {
+            status: "error",
+            errorCode: "stream_protocol_error",
+            retryable: true,
+          });
+          setStreamingAnswer("");
+        } else {
+          setError(message);
+        }
       }
     } finally {
       setBusy(false);
       setCurrentTurnId(undefined);
       abortController.current = null;
-      if (completedConversationId) {
+      if (terminalConversationId) {
         navigate(
-          `/?conversation=${encodeURIComponent(completedConversationId)}`,
+          `/?conversation=${encodeURIComponent(terminalConversationId)}`,
           { replace: true },
         );
       }
@@ -275,19 +342,63 @@ export default function Home() {
     await runResearch(parsed);
   }
 
+  async function retryTurn(turnId: string) {
+    if (!active) {
+      return;
+    }
+    const originalQuestion = messages.find(
+      (message) => message.turnId === turnId && message.role === "user",
+    )?.content;
+    if (!originalQuestion) {
+      setError("元の調査条件を復元できませんでした。");
+      return;
+    }
+    const parsed = researchRequestSchema.parse({
+      conversationId: active.conversation.id,
+      displayName: data.identity?.displayName,
+      disease: "ischemic stroke",
+      followUp: originalQuestion,
+    });
+    await runResearch(parsed);
+  }
+
   async function cancelResearch() {
     if (currentTurnId) {
-      await fetch(
+      const response = await fetch(
         `/api/turns/${encodeURIComponent(currentTurnId)}/cancel`,
         {
           method: "POST",
           credentials: "same-origin",
         },
       ).catch(() => undefined);
+      if (!response?.ok) {
+        setError("キャンセル要求を完了できませんでした。");
+        return;
+      }
+      const result = (await response.json()) as {
+        cancelled: boolean;
+        status: TurnStatusView["status"];
+        conversationId: string;
+      };
+      if (!result.cancelled) {
+        return;
+      }
+      updateTurn(currentTurnId, {
+        status: "cancelled",
+        errorCode: null,
+        retryable: true,
+      });
+      setStreamingAnswer("");
+      setProgress(undefined);
+      navigate(
+        `/?conversation=${encodeURIComponent(result.conversationId)}`,
+        { replace: true },
+      );
     }
     abortController.current?.abort();
     setBusy(false);
-    setError("調査をキャンセルしました。");
+    setCurrentTurnId(undefined);
+    abortController.current = null;
   }
 
   async function submitFeedback(turnId: string, input: FeedbackInput) {
@@ -361,6 +472,7 @@ export default function Home() {
               onCancel={cancelResearch}
               onFeedback={submitFeedback}
               onFollowUp={followUp}
+              onRetry={retryTurn}
               progress={progress}
               streamingAnswer={streamingAnswer}
               feedbackByTurn={feedbackByTurn}

@@ -97,13 +97,79 @@ test("cancel and sanitized agent error states", async ({ page }) => {
   await startResearch(page, "slow-cancel");
   await expect(page.getByText("公開論文を検索しています。")).toBeVisible();
   await page.getByRole("button", { name: "キャンセル" }).click();
-  await expect(page.getByText("調査をキャンセルしました。")).toBeVisible();
+  await expect(
+    page.getByText("調査をキャンセルしました", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByText("調査をキャンセルしました", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "元の条件で再試行" }).click();
+  await expect(
+    page.getByRole("heading", { name: "結論", exact: true }),
+  ).toBeVisible();
 
   await page.getByRole("link", { name: "新しい調査" }).click();
   await page.getByLabel("Target molecule任意・英語").fill("NLRP3");
   await page.getByLabel("Research question任意").fill("agent-error");
   await page.getByRole("button", { name: "調査を開始" }).click();
-  await expect(page.getByText("調査中にエラーが発生しました。")).toBeVisible();
+  await expect(page.getByText("調査エラー", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "元の条件で再試行" }),
+  ).toBeVisible();
+});
+
+test("retryable error survives reload and retries as a new turn", async ({
+  page,
+}) => {
+  await startResearch(page, "retry-once");
+  await expect(page.getByText("調査エラー", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("調査エラー", { exact: true })).toBeVisible();
+
+  const oldTurnId = await page
+    .getByText("調査エラー", { exact: true })
+    .locator("xpath=ancestor::*[contains(@class, 'turn-recovery')]")
+    .getAttribute("data-turn-id");
+  await page.getByRole("button", { name: "元の条件で再試行" }).click();
+  await expect(
+    page.getByRole("heading", { name: "結論", exact: true }),
+  ).toBeVisible();
+  const completedTurnId = await page
+    .locator("article.message-assistant[data-turn-id]")
+    .last()
+    .getAttribute("data-turn-id");
+  expect(completedTurnId).not.toBe(oldTurnId);
+});
+
+test("cancel on a completed turn is idempotent", async ({ page }) => {
+  await startResearch(page, "completed-cancel");
+  await expect(
+    page.getByRole("heading", { name: "結論", exact: true }),
+  ).toBeVisible();
+  const turnId = await page
+    .locator("article.message-assistant[data-turn-id]")
+    .last()
+    .getAttribute("data-turn-id");
+  expect(turnId).toBeTruthy();
+
+  const result = await page.evaluate(async (id) => {
+    const response = await fetch(`/api/turns/${id}/cancel`, {
+      method: "POST",
+    });
+    return (await response.json()) as {
+      cancelled: boolean;
+      status: string;
+    };
+  }, turnId);
+  expect(result).toMatchObject({
+    cancelled: false,
+    status: "completed",
+  });
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "結論", exact: true }),
+  ).toBeVisible();
 });
 
 test("duplicate SSE frames are ignored without duplicating output", async ({
@@ -132,8 +198,11 @@ for (const question of [
     await startResearch(page, question);
     await expect(
       page.getByText(
-        "調査サービスに接続できませんでした。もう一度お試しください。",
+        "調査を完了できませんでした。元の条件で新しいturnとして再試行できます。",
       ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "元の条件で再試行" }),
     ).toBeVisible();
     await expect(page.getByText("mismatched event")).toHaveCount(0);
   });

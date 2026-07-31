@@ -165,6 +165,10 @@ Evidence tableには、少なくともclaim、support level、evidence stage、s
 公開SSE schema 2.0はevent IDと単調sequenceを必須とする。terminal前の切断、
 conversation/turn不一致、順序違反はretryable protocol errorとして表示し、同じ
 event IDのduplicateは表示しない。自動再接続は行わず、retry時は新しいturnを作る。
+cancelled/error turnはstatus、分類済みerror code、retryability、turn IDを再読込時も
+復元する。retryは元turnの表示質問と会話に保存された研究条件から新しいturnを作り、
+streaming中の部分回答は入力にも表示にも再利用しない。cancelはrunning turnだけを
+原子的に遷移させ、確定済みturnへの再送はidempotentに現在statusを返す。
 
 ## 11. Feedback要件
 
