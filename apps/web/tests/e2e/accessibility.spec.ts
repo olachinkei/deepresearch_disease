@@ -32,7 +32,7 @@ test("critical and serious axe violations remain at zero", async ({ page }) => {
   await page.getByRole("button", { name: "調査を開始" }).click();
   await expect(
     page.getByRole("heading", { name: "結論", exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 10_000 });
   await expectNoSeriousAxeViolations(page);
 });
 
@@ -60,7 +60,7 @@ test("research controls complete the keyboard flow with scoped announcements", a
   await page.keyboard.press("Enter");
   await expect(
     page.getByRole("heading", { name: "結論", exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 10_000 });
 
   const source = page.getByRole("link", { name: "Mock publication" }).last();
   await source.focus();
@@ -79,7 +79,7 @@ test("research controls complete the keyboard flow with scoped announcements", a
   await page.keyboard.press("Enter");
   await expect(
     page.getByText("Compare negative evidence.", { exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 10_000 });
 
   const positiveFeedback = page
     .getByRole("button", { name: "役に立った" })
@@ -90,7 +90,7 @@ test("research controls complete the keyboard flow with scoped announcements", a
     .getByRole("status")
     .filter({ hasText: "フィードバックを保存しました" })
     .last();
-  await expect(feedbackStatus).toBeVisible();
+  await expect(feedbackStatus).toBeVisible({ timeout: 10_000 });
   await expect(feedbackStatus).toBeFocused();
 });
 
