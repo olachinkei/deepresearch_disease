@@ -30,11 +30,18 @@ export async function action({ request, params }: Route.ActionArgs) {
     return Response.json({ error: "Turn not found." }, { status: 404 });
   }
 
-  const localCancelled = cancelRegisteredRun(params.turnId);
-  const upstreamCancelled = await new HttpAgentClient().cancel(params.turnId);
-  await conversations.markCancelled(params.turnId);
+  const transitioned = await conversations.cancelRunningTurn(params.turnId);
+  if (transitioned) {
+    cancelRegisteredRun(params.turnId);
+    await new HttpAgentClient().cancel(params.turnId);
+  }
+  const current = transitioned
+    ? { ...ownedTurn.turn, status: "cancelled" as const }
+    : (await conversations.findTurnOwned(params.turnId, identity.id))?.turn;
 
   return Response.json({
-    cancelled: localCancelled || upstreamCancelled,
+    cancelled: transitioned,
+    status: current?.status ?? ownedTurn.turn.status,
+    conversationId: ownedTurn.conversation.id,
   });
 }

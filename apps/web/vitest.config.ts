@@ -5,7 +5,10 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     environment: "node",
-    include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
+    include: [
+      "tests/unit/**/*.test.{ts,tsx}",
+      "tests/integration/**/*.test.ts",
+    ],
     coverage: {
       reporter: ["text", "json-summary"],
     },

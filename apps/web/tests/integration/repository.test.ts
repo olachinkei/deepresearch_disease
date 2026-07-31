@@ -87,4 +87,82 @@ describe("conversation repositories", () => {
       await repository.findOwned(conversation.id, secondUser),
     ).toBeUndefined();
   });
+
+  it("allows exactly one terminal transition in a complete/cancel race", async () => {
+    const userId = randomUUID();
+    await new IdentityRepository(testDatabase.db).create({
+      id: userId,
+      displayName: "競合テスト",
+    });
+    const repository = new ConversationRepository(testDatabase.db);
+    const conversation = await repository.create({
+      userId,
+      title: "Atomic transition",
+      research: researchRequestSchema.parse({
+        disease: "ischemic stroke",
+        researchQuestion: "Synthetic race test.",
+      }),
+    });
+    const turn = await repository.beginTurn({
+      conversationId: conversation.id,
+      userId,
+      query: "Synthetic race test.",
+    });
+
+    const [completed, cancelled] = await Promise.all([
+      repository.completeRunningTurn({
+        conversationId: conversation.id,
+        turnId: turn.turnId,
+        content: "# Synthetic completed answer",
+      }),
+      repository.cancelRunningTurn(turn.turnId),
+    ]);
+
+    expect([completed, cancelled].filter(Boolean)).toHaveLength(1);
+    const detail = await repository.getDetail(conversation.id, userId);
+    expect(detail?.turns[0]?.status).toBe(
+      completed ? "completed" : "cancelled",
+    );
+    expect(
+      detail?.messages.filter((message) => message.role === "assistant"),
+    ).toHaveLength(completed ? 1 : 0);
+  });
+
+  it("keeps terminal turns unchanged when cancel is repeated", async () => {
+    const userId = randomUUID();
+    await new IdentityRepository(testDatabase.db).create({
+      id: userId,
+      displayName: "再送テスト",
+    });
+    const repository = new ConversationRepository(testDatabase.db);
+    const conversation = await repository.create({
+      userId,
+      title: "Idempotent cancel",
+      research: researchRequestSchema.parse({
+        disease: "ischemic stroke",
+      }),
+    });
+    const completedTurn = await repository.beginTurn({
+      conversationId: conversation.id,
+      userId,
+      query: "Complete first.",
+    });
+    expect(await repository.markCompleted(completedTurn.turnId)).toBe(true);
+    expect(await repository.cancelRunningTurn(completedTurn.turnId)).toBe(false);
+
+    const cancelledTurn = await repository.beginTurn({
+      conversationId: conversation.id,
+      userId,
+      query: "Cancel first.",
+    });
+    expect(await repository.cancelRunningTurn(cancelledTurn.turnId)).toBe(true);
+    expect(await repository.cancelRunningTurn(cancelledTurn.turnId)).toBe(false);
+    expect(await repository.markFailed(cancelledTurn.turnId)).toBe(false);
+
+    const detail = await repository.getDetail(conversation.id, userId);
+    expect(detail?.turns.map((turn) => turn.status)).toEqual([
+      "completed",
+      "cancelled",
+    ]);
+  });
 });

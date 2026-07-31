@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 
 const cancelledTurns = new Set<string>();
+const failedOncePrompts = new Set<string>();
 
 function sendEvent(
   response: import("node:http").ServerResponse,
@@ -112,7 +113,12 @@ const server = createServer((request, response) => {
       return;
     }
 
-    if (prompt.includes("agent-error")) {
+    const failOnce =
+      prompt.includes("retry-once") && !failedOncePrompts.has("retry-once");
+    if (failOnce) {
+      failedOncePrompts.add("retry-once");
+    }
+    if (prompt.includes("agent-error") || failOnce) {
       setTimeout(() => {
         sendEvent(response, {
           kind: "error",

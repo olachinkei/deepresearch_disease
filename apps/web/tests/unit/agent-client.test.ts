@@ -237,6 +237,35 @@ describe("HttpAgentClient", () => {
     };
     await expect(collect()).rejects.toBeInstanceOf(AgentUnavailableError);
   });
+
+  it("bounds an unresponsive upstream cancel request", async () => {
+    const previous = process.env.AGENT_CANCEL_TIMEOUT_MS;
+    process.env.AGENT_CANCEL_TIMEOUT_MS = "5";
+    let aborted = false;
+    const client = new HttpAgentClient("http://agent.test", async (_input, init) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener(
+          "abort",
+          () => {
+            aborted = true;
+            reject(new Error("synthetic timeout detail"));
+          },
+          { once: true },
+        );
+      }),
+    );
+
+    try {
+      await expect(client.cancel(turnId)).resolves.toBe(false);
+      expect(aborted).toBe(true);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.AGENT_CANCEL_TIMEOUT_MS;
+      } else {
+        process.env.AGENT_CANCEL_TIMEOUT_MS = previous;
+      }
+    }
+  });
 });
 
 async function collectEvents(client: HttpAgentClient) {

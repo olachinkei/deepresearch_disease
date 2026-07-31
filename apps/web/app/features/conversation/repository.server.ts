@@ -17,6 +17,37 @@ import {
 } from "~/shared/database/schema";
 import type { ResearchRequest } from "~/features/research/schema";
 
+async function withSqliteBusyRetry<T>(operation: () => Promise<T>) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt >= 3 || !hasErrorCode(error, "SQLITE_BUSY")) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5 * 2 ** attempt));
+    }
+  }
+}
+
+function hasErrorCode(error: unknown, expected: string) {
+  let current = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (!current || typeof current !== "object") {
+      return false;
+    }
+    if (
+      "code" in current &&
+      typeof current.code === "string" &&
+      current.code === expected
+    ) {
+      return true;
+    }
+    current = "cause" in current ? current.cause : undefined;
+  }
+  return false;
+}
+
 export class ConversationRepository {
   constructor(private readonly db: AppDatabase) {}
 
@@ -151,37 +182,90 @@ export class ConversationRepository {
     return id;
   }
 
-  async markCompleted(turnId: string) {
-    await this.db
-      .update(turns)
-      .set({
-        status: "completed",
-        completedAt: sql`CURRENT_TIMESTAMP`,
-        errorCode: null,
-      })
-      .where(eq(turns.id, turnId));
+  async completeRunningTurn(input: {
+    conversationId: string;
+    turnId: string;
+    content: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    return withSqliteBusyRetry(() =>
+      this.db.transaction(async (transaction) => {
+        const [updated] = await transaction
+          .update(turns)
+          .set({
+            status: "completed",
+            completedAt: sql`CURRENT_TIMESTAMP`,
+            errorCode: null,
+          })
+          .where(
+            and(
+              eq(turns.id, input.turnId),
+              eq(turns.conversationId, input.conversationId),
+              eq(turns.status, "running"),
+            ),
+          )
+          .returning({ id: turns.id });
+        if (!updated) {
+          return false;
+        }
+        await transaction.insert(transcriptMessages).values({
+          id: randomUUID(),
+          conversationId: input.conversationId,
+          turnId: input.turnId,
+          role: "assistant",
+          content: input.content,
+          metadataJson: input.metadata
+            ? JSON.stringify(input.metadata)
+            : undefined,
+        });
+        return true;
+      }),
+    );
   }
 
-  async markCancelled(turnId: string) {
-    await this.db
-      .update(turns)
-      .set({
-        status: "cancelled",
-        completedAt: sql`CURRENT_TIMESTAMP`,
-        errorCode: null,
-      })
-      .where(eq(turns.id, turnId));
+  async markCompleted(turnId: string) {
+    return withSqliteBusyRetry(async () => {
+      const [updated] = await this.db
+        .update(turns)
+        .set({
+          status: "completed",
+          completedAt: sql`CURRENT_TIMESTAMP`,
+          errorCode: null,
+        })
+        .where(and(eq(turns.id, turnId), eq(turns.status, "running")))
+        .returning({ id: turns.id });
+      return Boolean(updated);
+    });
+  }
+
+  async cancelRunningTurn(turnId: string) {
+    return withSqliteBusyRetry(async () => {
+      const [updated] = await this.db
+        .update(turns)
+        .set({
+          status: "cancelled",
+          completedAt: sql`CURRENT_TIMESTAMP`,
+          errorCode: null,
+        })
+        .where(and(eq(turns.id, turnId), eq(turns.status, "running")))
+        .returning({ id: turns.id });
+      return Boolean(updated);
+    });
   }
 
   async markFailed(turnId: string, errorCode = "agent_unavailable") {
-    await this.db
-      .update(turns)
-      .set({
-        status: "error",
-        errorCode,
-        completedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(eq(turns.id, turnId));
+    return withSqliteBusyRetry(async () => {
+      const [updated] = await this.db
+        .update(turns)
+        .set({
+          status: "error",
+          errorCode,
+          completedAt: sql`CURRENT_TIMESTAMP`,
+        })
+        .where(and(eq(turns.id, turnId), eq(turns.status, "running")))
+        .returning({ id: turns.id });
+      return Boolean(updated);
+    });
   }
 
   async findTurnOwned(turnId: string, userId: string) {

@@ -172,6 +172,7 @@
 - [x] 検索進捗と回答streamingを実装する。
 - [x] evidence tableとsource表示を実装する。
 - [x] cancel / retry / error状態を実装する。
+- [x] cancel/error statusの再読込、原子的cancel、新規turn retryを実装する。
 - [x] multi-turnと再読込を実装する。
 - [x] feedback UIとローカルqueueを実装する。
 - [x] feedbackのturn/user一意性、revision同期、再読込後の状態復元を実装する。

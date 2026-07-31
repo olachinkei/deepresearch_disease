@@ -79,6 +79,10 @@ ADK runtimeは各turnの実行taskをregistryで追跡する。`/run_sse` invoca
 最大180秒のdeadline scopeで囲み、cancel endpointは対応するtaskとchild provider
 taskを直接中断する。terminal stateは送信前にregistryで確定し、complete/cancel race
 でも`completed`、`cancelled`、`error`のいずれか1件だけを送る。
+Webはturnのterminal遷移を `status = running` の条件付き更新に限定し、回答保存と
+`completed` 遷移を同一transactionで行う。一時的なSQLite write contentionだけを
+有限retryし、確定済みturnへのcancelは状態を変えない。Agent cancel HTTP requestは
+短いtimeoutで打ち切るが、ローカルのcancel状態は維持する。
 
 ## 4. DB所有権
 

@@ -2,8 +2,9 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "scripts/*.ts",
-    "tests/e2e/mock-agent-server.ts"
+    "tests/e2e/mock-agent-server.ts",
+    "tests/unit/*.test.tsx"
   ],
   "project": ["app/**/*.{ts,tsx}", "tests/**/*.{ts,tsx}", "scripts/**/*.ts"],
-  "ignoreDependencies": ["@testing-library/jest-dom", "@testing-library/react"]
+  "ignoreDependencies": ["@testing-library/jest-dom"]
 }
