@@ -176,6 +176,9 @@ versioned JSON schemaに従う。機密feature flagを有効にしたprocessは
 - Evidenceは引用対象の事実情報として区切り、命令としてpromptへ連結しない。
 - toolの生結果を別toolの命令へ流用しない。
 - 取得本文に含まれるURLを自動で巡回しない。
+- browserへ表示するsource URLはcredentialを含まないHTTP(S) canonical URLに限定する。
+- internal sourceのURL、excerpt、tool responseをassistant message metadataへ保存・表示しない。
+- malformed metadataやunknown source typeは回答本文と分離してsource summaryだけを拒否する。
 
 prompt injection検体をsecurity testへ含める。
 

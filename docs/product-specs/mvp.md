@@ -169,6 +169,10 @@ cancelled/error turnはstatus、分類済みerror code、retryability、turn ID�
 復元する。retryは元turnの表示質問と会話に保存された研究条件から新しいturnを作り、
 streaming中の部分回答は入力にも表示にも再利用しない。cancelはrunning turnだけを
 原子的に遷移させ、確定済みturnへの再送はidempotentに現在statusを返す。
+回答ごとのstructured source summaryはversioned metadataとして保存し、source count、
+title、`公開` / `内部` badge、canonical URL、verification statusをstream完了直後と
+reload後に同じ形で表示する。内部sourceのURL、excerpt、tool生結果はbrowserへ送らず、
+malformed metadataや危険なURLはsummary単位で安全に非表示とする。
 
 ## 11. Feedback要件
 

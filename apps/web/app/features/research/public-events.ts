@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { sourceSummaryListSchema } from "./source-summary";
+
 const eventContext = {
   schemaVersion: z.literal("2.0"),
   conversationId: z.uuid(),
@@ -33,24 +35,12 @@ const answerDeltaSchema = z
   })
   .strict();
 
-export const sourceSummarySchema = z
-  .object({
-    id: z.string().min(1).max(120),
-    title: z.string().min(1).max(300),
-    url: z
-      .url()
-      .refine((value) => /^https?:\/\//u.test(value), "URL must be HTTP(S).")
-      .optional(),
-    sourceType: z.enum(["internal", "web"]),
-  })
-  .strict();
-
 const completedSchema = z
   .object({
     ...eventContext,
     answerMarkdown: z.string().max(150_000),
     sourceCount: z.number().int().nonnegative().optional(),
-    sourceSummary: z.array(sourceSummarySchema).max(12).optional(),
+    sourceSummary: sourceSummaryListSchema.optional(),
   })
   .strict();
 

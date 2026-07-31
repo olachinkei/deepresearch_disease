@@ -171,6 +171,7 @@
 - [x] 初回調査フォームとvalidationを実装する。
 - [x] 検索進捗と回答streamingを実装する。
 - [x] evidence tableとsource表示を実装する。
+- [x] structured source summaryの安全な保存・再読込・分類表示を実装する。
 - [x] cancel / retry / error状態を実装する。
 - [x] cancel/error statusの再読込、原子的cancel、新規turn retryを実装する。
 - [x] multi-turnと再読込を実装する。

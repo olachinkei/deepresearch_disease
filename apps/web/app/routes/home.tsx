@@ -18,6 +18,7 @@ import {
 import { ConversationRepository } from "~/features/conversation/repository.server";
 import { ConversationSidebar } from "~/features/conversation/sidebar";
 import { ConversationThread } from "~/features/conversation/conversation-thread";
+import { buildAssistantMessageMetadata } from "~/features/conversation/message-metadata";
 import type {
   ActiveConversationView,
   TranscriptView,
@@ -105,6 +106,7 @@ export async function loader({ request }: Route.LoaderArgs) {
             role: message.role,
             content: message.content,
             createdAt: message.createdAt,
+            sourceMetadata: message.sourceMetadata,
           })),
           feedbackByTurn: Object.fromEntries(
             feedback.map((record) => [
@@ -273,6 +275,10 @@ export default function Home() {
               role: "assistant",
               content: event.data.answerMarkdown,
               createdAt: new Date().toISOString(),
+              sourceMetadata: buildAssistantMessageMetadata({
+                sourceCount: event.data.sourceCount,
+                sourceSummary: event.data.sourceSummary,
+              }),
             },
           ]);
           setStreamingAnswer("");

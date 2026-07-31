@@ -27,6 +27,7 @@ import type {
   TurnStatusView,
 } from "./view-model";
 import { turnRecoveryMessage } from "./turn-state";
+import { SourceSummary } from "./source-summary";
 
 type ConversationThreadProps = {
   active: ActiveConversationView;
@@ -131,6 +132,7 @@ export function ConversationThread({
                       {message.content}
                     </ReactMarkdown>
                   </div>
+                  <SourceSummary metadata={message.sourceMetadata} />
                   <div className="medical-disclaimer">
                     創薬仮説探索用の情報です。臨床判断や患者個別の治療助言には使用できません。
                   </div>

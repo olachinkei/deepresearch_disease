@@ -3,9 +3,9 @@ import { z } from "zod";
 import { parseSseStream } from "~/shared/sse/parser";
 
 import {
-  sourceSummarySchema,
   type PublicResearchEvent,
 } from "./public-events";
+import { sourceSummaryListSchema } from "./source-summary";
 
 const upstreamPartSchema = z
   .object({
@@ -137,7 +137,7 @@ function eventContext(
 }
 
 function safeSourceSummary(value: unknown) {
-  const result = z.array(sourceSummarySchema).max(12).safeParse(value);
+  const result = sourceSummaryListSchema.safeParse(value);
   return result.success ? result.data : undefined;
 }
 

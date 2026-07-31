@@ -21,10 +21,15 @@ test("research, streaming, follow-up, reload, and feedback", async ({
   await expect(
     page.getByRole("heading", { name: "結論", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Mock publication" })).toHaveAttribute(
-    "href",
-    "https://example.org/paper-1",
-  );
+  const sourceSummary = page.getByRole("region", {
+    name: "構造化ソース概要",
+  });
+  await expect(sourceSummary.getByText("3件")).toBeVisible();
+  await expect(
+    sourceSummary.getByRole("link", { name: "Mock publication" }),
+  ).toHaveAttribute("href", "https://example.org/paper-1");
+  await expect(sourceSummary.getByText("公開")).toBeVisible();
+  await expect(sourceSummary.getByText("検証済み")).toBeVisible();
 
   await page
     .getByRole("textbox", { name: "追加調査", exact: true })
@@ -36,6 +41,15 @@ test("research, streaming, follow-up, reload, and feedback", async ({
   await expect(page.getByText("臨床的な有効性は未確立です。").last()).toBeVisible();
 
   await page.reload();
+  const reloadedSourceSummary = page
+    .getByRole("region", { name: "構造化ソース概要" })
+    .last();
+  await expect(reloadedSourceSummary).toContainText("3件");
+  await expect(reloadedSourceSummary).toContainText("公開");
+  await expect(reloadedSourceSummary).toContainText("検証済み");
+  await expect(
+    reloadedSourceSummary.getByRole("link", { name: "Mock publication" }),
+  ).toHaveAttribute("href", "https://example.org/paper-1");
   await expect(page.getByText("臨床的な有効性は未確立です.")).toHaveCount(0);
   await expect(page.getByText("臨床的な有効性は未確立です。").last()).toBeVisible();
 

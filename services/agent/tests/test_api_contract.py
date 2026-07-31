@@ -127,6 +127,8 @@ async def test_openapi_and_sse_public_contract(tmp_path, monkeypatch) -> None:
         for event in events
     )
     assert len({event["id"] for event in events}) == len(events)
+    source_summary = events[-1]["customMetadata"]["source_summary"]
+    assert all("verificationStatus" in source for source in source_summary)
     assert not any("tool_response" in line or "internal excerpt" in line for line in data_lines)
 
 

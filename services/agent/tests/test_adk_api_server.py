@@ -119,6 +119,12 @@ async def test_google_adk_api_server_openapi_sse_and_session_state(
         for event in events
     )
     assert len({event["id"] for event in events}) == len(events)
+    source_summary = events[-1]["customMetadata"]["source_summary"]
+    assert all(
+        source["verificationStatus"]
+        in {"verified", "unverified", "not_found", "failed"}
+        for source in source_summary
+    )
     manifest = events[-1]["customMetadata"]["manifest"]
     assert manifest["model_id"] == GENERATION_MODEL_ID
     assert manifest["prompt_version"] == SYNTHESIS_PROMPT_VERSION

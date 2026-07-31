@@ -736,6 +736,112 @@ input[readonly] {
   background: var(--green-50);
 }
 
+.source-summary {
+  background: #f8faf9;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 20px;
+  padding: 13px 14px;
+}
+
+.source-summary > header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.source-summary h3 {
+  align-items: center;
+  color: var(--green-950);
+  display: inline-flex;
+  font-size: 11px;
+  gap: 7px;
+  margin: 0;
+}
+
+.source-summary > header > span,
+.source-summary > p {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.source-summary > p {
+  margin: 10px 0 0;
+}
+
+.source-summary ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 11px 0 0;
+  padding: 0;
+}
+
+.source-summary li {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid #e6ebe8;
+  border-radius: 6px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 9px 10px;
+}
+
+.source-summary-title {
+  font-size: 11px;
+  line-height: 1.5;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-summary-title a {
+  align-items: baseline;
+  color: var(--green-700);
+  display: inline-flex;
+  gap: 5px;
+  text-underline-offset: 3px;
+}
+
+.source-summary-badges {
+  display: flex;
+  flex-shrink: 0;
+  gap: 5px;
+}
+
+.source-summary-badges > span {
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+
+.source-kind-web {
+  background: #e9f5ef;
+  color: var(--green-700);
+}
+
+.source-kind-internal {
+  background: #f2ebff;
+  color: #67469b;
+}
+
+.verification {
+  background: #edf0ef;
+  color: var(--muted);
+}
+
+.verification-verified {
+  background: #e7f3ff;
+  color: #275e8b;
+}
+
+.verification-failed {
+  background: #fff0ee;
+  color: var(--danger);
+}
+
 .medical-disclaimer {
   background: #f7f9f8;
   border-left: 2px solid var(--amber);
