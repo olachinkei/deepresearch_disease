@@ -98,6 +98,7 @@ class DeepResearchAdkAgent(BaseAgent):
         cancel_event = await self.registry.begin(metadata.turn_id)
         first_event = True
         terminal_emitted = False
+        event_sequence = 0
         started_at = datetime.now(UTC)
         try:
             async with asyncio.timeout(self.deadline_seconds):
@@ -125,7 +126,12 @@ class DeepResearchAdkAgent(BaseAgent):
                     cancel_event=cancel_event,
                     session_state=state,
                 ):
-                    event = _to_adk_event(workflow_event, author=self.name)
+                    event = _to_adk_event(
+                        workflow_event,
+                        author=self.name,
+                        conversation_id=metadata.conversation_id,
+                        sequence=event_sequence,
+                    )
                     if event.turn_complete:
                         terminal_emitted = await self.registry.mark_terminal(
                             metadata.turn_id
@@ -136,6 +142,7 @@ class DeepResearchAdkAgent(BaseAgent):
                         event.actions = EventActions(state_delta=state_delta)
                         first_event = False
                     yield event
+                    event_sequence += 1
         except asyncio.CancelledError:
             if not terminal_emitted and await self.registry.mark_terminal(
                 metadata.turn_id
@@ -148,6 +155,7 @@ class DeepResearchAdkAgent(BaseAgent):
                     finish_reason="cancelled",
                     flags=["cancelled"],
                     started_at=started_at,
+                    sequence=event_sequence,
                 )
         except TimeoutError:
             cancel_event.set()
@@ -163,6 +171,7 @@ class DeepResearchAdkAgent(BaseAgent):
                     flags=["timeout"],
                     error_code="turn_deadline_exceeded",
                     started_at=started_at,
+                    sequence=event_sequence,
                 )
         except Exception as exc:
             logger.warning(
@@ -185,6 +194,7 @@ class DeepResearchAdkAgent(BaseAgent):
                     flags=["agent_execution_failed"],
                     error_code="agent_execution_failed",
                     started_at=started_at,
+                    sequence=event_sequence,
                 )
         finally:
             await self.registry.finish(metadata.turn_id)
@@ -198,6 +208,7 @@ class DeepResearchAdkAgent(BaseAgent):
         finish_reason: Literal["cancelled", "timeout", "error"],
         flags: list[str],
         started_at: datetime,
+        sequence: int,
         error_code: str | None = None,
     ) -> Event:
         set_safe_span_attributes(
@@ -226,6 +237,8 @@ class DeepResearchAdkAgent(BaseAgent):
         terminal_metadata: dict[str, Any] = {
             "kind": kind,
             "turn_id": metadata.turn_id,
+            "conversation_id": metadata.conversation_id,
+            "event_sequence": sequence,
             "manifest": manifest.model_dump(mode="json"),
         }
         if error_code:
@@ -291,13 +304,21 @@ def _content_text(content: types.Content | None) -> str:
     return "\n".join(part.text for part in content.parts or [] if part.text)
 
 
-def _to_adk_event(event: WorkflowEvent, *, author: str) -> Event:
+def _to_adk_event(
+    event: WorkflowEvent,
+    *,
+    author: str,
+    conversation_id: str,
+    sequence: int,
+) -> Event:
     text = event.delta or event.message
     if event.kind == "completed" and event.result:
         text = event.result.answer_markdown
     metadata: dict[str, Any] = {
         "kind": event.kind,
         "turn_id": event.turn_id,
+        "conversation_id": conversation_id,
+        "event_sequence": sequence,
         **event.details,
     }
     if event.result:

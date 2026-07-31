@@ -6,14 +6,17 @@ function sendEvent(
   response: import("node:http").ServerResponse,
   input: {
     kind: string;
+    conversationId: string;
     turnId: string;
+    sequence: number;
+    eventId?: string;
     text?: string;
     metadata?: Record<string, unknown>;
   },
 ) {
   response.write(
     `data: ${JSON.stringify({
-      id: crypto.randomUUID(),
+      id: input.eventId ?? `${input.turnId}:${input.sequence}`,
       author: "deepresearch_agent",
       content: {
         role: "model",
@@ -23,6 +26,8 @@ function sendEvent(
       customMetadata: {
         kind: input.kind,
         turn_id: input.turnId,
+        conversation_id: input.conversationId,
+        event_sequence: input.sequence,
         ...input.metadata,
       },
     })}\n\n`,
@@ -56,24 +61,65 @@ const server = createServer((request, response) => {
     const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as {
       new_message: { parts: Array<{ text: string }> };
       custom_metadata: { turn_id: string };
+      session_id: string;
     };
     const prompt = body.new_message.parts.map((part) => part.text).join("");
     const turnId = body.custom_metadata.turn_id;
+    const conversationId = body.session_id;
     response.writeHead(200, {
       "content-type": "text/event-stream",
       "cache-control": "no-cache",
     });
-    sendEvent(response, { kind: "research_started", turnId });
+    sendEvent(response, {
+      kind: "research_started",
+      conversationId,
+      turnId,
+      sequence: 0,
+    });
     sendEvent(response, {
       kind: "search_progress",
+      conversationId,
       turnId,
+      sequence: prompt.includes("out-of-order") ? 2 : 1,
       text: "公開論文を検索しています。",
       metadata: { stage: "retrieval", source_count: 3 },
     });
+    if (prompt.includes("duplicate-frame")) {
+      sendEvent(response, {
+        kind: "search_progress",
+        conversationId,
+        turnId,
+        sequence: 1,
+        eventId: `${turnId}:1`,
+        text: "公開論文を検索しています。",
+        metadata: { stage: "retrieval", source_count: 3 },
+      });
+    }
+
+    if (prompt.includes("truncated-stream") || prompt.includes("out-of-order")) {
+      response.end();
+      return;
+    }
+    if (prompt.includes("turn-mismatch")) {
+      sendEvent(response, {
+        kind: "answer_delta",
+        conversationId,
+        turnId: crypto.randomUUID(),
+        sequence: 2,
+        text: "mismatched event",
+      });
+      response.end();
+      return;
+    }
 
     if (prompt.includes("agent-error")) {
       setTimeout(() => {
-        sendEvent(response, { kind: "error", turnId });
+        sendEvent(response, {
+          kind: "error",
+          conversationId,
+          turnId,
+          sequence: 2,
+        });
         response.end("data: [DONE]\n\n");
       }, 80);
       return;
@@ -82,18 +128,27 @@ const server = createServer((request, response) => {
     const delay = prompt.includes("slow-cancel") ? 2_000 : 80;
     setTimeout(() => {
       if (cancelledTurns.has(turnId)) {
-        sendEvent(response, { kind: "cancelled", turnId });
+        sendEvent(response, {
+          kind: "cancelled",
+          conversationId,
+          turnId,
+          sequence: 2,
+        });
         response.end("data: [DONE]\n\n");
         return;
       }
       sendEvent(response, {
         kind: "answer_delta",
+        conversationId,
         turnId,
+        sequence: 2,
         text: "# 結論\nNLRP3 inhibition は前臨床段階で有望です。\n\n",
       });
       sendEvent(response, {
         kind: "completed",
+        conversationId,
         turnId,
+        sequence: 3,
         text: [
           "# 結論",
           "NLRP3 inhibition は前臨床段階で有望です。",

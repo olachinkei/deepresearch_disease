@@ -116,6 +116,17 @@ async def test_openapi_and_sse_public_contract(tmp_path, monkeypatch) -> None:
         "answer_delta",
         "completed",
     ]
+    assert [event["customMetadata"]["event_sequence"] for event in events] == [
+        0,
+        1,
+        2,
+        3,
+    ]
+    assert all(
+        event["customMetadata"]["conversation_id"] == "conversation-1"
+        for event in events
+    )
+    assert len({event["id"] for event in events}) == len(events)
     assert not any("tool_response" in line or "internal excerpt" in line for line in data_lines)
 
 

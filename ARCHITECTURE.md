@@ -155,7 +155,12 @@ WebはADKの生eventをそのまま中継しない。
 | `cancelled` | 利用者cancel | 部分的なtool結果を含めない |
 | `error` | 回復可能な分類済みerror | stack、secret、外部payloadを含めない |
 
-各payloadは`schema_version`、`conversation_id`、`turn_id`を持つ。順序、重複、切断再接続をtestする。
+schema `2.0` の各eventはtop-level `eventId`、0始まりの `sequence` と、payload内の
+`schemaVersion`、`conversationId`、`turnId`を持つ。SSE `id:` は `eventId` と一致
+させる。Agent clientとbrowser consumerは `research_started` から単一terminalまでの
+順序、context一致、重複、途中切断を検証する。duplicate IDは破棄し、terminal前EOFや
+順序・ID不一致は本文を含まないretryable protocol errorへ変換する。MVPでは自動
+reconnectせず、retryは新しいturnとして実行する。
 timeout/cancelの内部eventは安全なrun manifestを持ち、本文を含まない
 `finish_reason`と分類済みflagを記録する。terminal送信後のdeltaやtool結果は禁止する。
 

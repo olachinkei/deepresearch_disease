@@ -1,9 +1,14 @@
 import { z } from "zod";
 
 const eventContext = {
-  schemaVersion: z.literal("1.0"),
+  schemaVersion: z.literal("2.0"),
   conversationId: z.uuid(),
   turnId: z.uuid(),
+} as const;
+
+const eventEnvelope = {
+  eventId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_.:-]+$/u),
+  sequence: z.number().int().nonnegative(),
 } as const;
 
 const researchStartedSchema = z
@@ -71,18 +76,49 @@ const errorSchema = z
   .strict();
 
 const publicEventSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("research_started"), data: researchStartedSchema }),
-  z.object({ type: z.literal("search_progress"), data: searchProgressSchema }),
-  z.object({ type: z.literal("answer_delta"), data: answerDeltaSchema }),
-  z.object({ type: z.literal("completed"), data: completedSchema }),
-  z.object({ type: z.literal("cancelled"), data: cancelledSchema }),
-  z.object({ type: z.literal("error"), data: errorSchema }),
+  z.object({
+    ...eventEnvelope,
+    type: z.literal("research_started"),
+    data: researchStartedSchema,
+  }),
+  z.object({
+    ...eventEnvelope,
+    type: z.literal("search_progress"),
+    data: searchProgressSchema,
+  }),
+  z.object({
+    ...eventEnvelope,
+    type: z.literal("answer_delta"),
+    data: answerDeltaSchema,
+  }),
+  z.object({
+    ...eventEnvelope,
+    type: z.literal("completed"),
+    data: completedSchema,
+  }),
+  z.object({
+    ...eventEnvelope,
+    type: z.literal("cancelled"),
+    data: cancelledSchema,
+  }),
+  z.object({
+    ...eventEnvelope,
+    type: z.literal("error"),
+    data: errorSchema,
+  }),
 ]);
 
 export type PublicResearchEvent = z.infer<typeof publicEventSchema>;
 
 export function encodePublicEvent(event: PublicResearchEvent) {
-  return `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
+  return (
+    `id: ${event.eventId}\nevent: ${event.type}\n` +
+    `data: ${JSON.stringify({
+      eventId: event.eventId,
+      sequence: event.sequence,
+      ...event.data,
+    })}\n\n`
+  );
 }
 
 export function decodePublicEvent(eventName: string | undefined, data: string) {
@@ -90,9 +126,19 @@ export function decodePublicEvent(eventName: string | undefined, data: string) {
     return undefined;
   }
   try {
+    const parsed = z
+      .object({
+        eventId: eventEnvelope.eventId,
+        sequence: eventEnvelope.sequence,
+      })
+      .passthrough()
+      .parse(JSON.parse(data) as unknown);
+    const { eventId, sequence, ...eventData } = parsed;
     return publicEventSchema.parse({
+      eventId,
+      sequence,
       type: eventName,
-      data: JSON.parse(data) as unknown,
+      data: eventData,
     });
   } catch {
     return undefined;

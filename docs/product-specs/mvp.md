@@ -162,6 +162,9 @@ Evidence tableには、少なくともclaim、support level、evidence stage、s
 | terminal error | 安全な説明、turn ID、復旧案 |
 
 検索query、tool payload、社内excerpt、secret、stack traceはUIへ表示しない。
+公開SSE schema 2.0はevent IDと単調sequenceを必須とする。terminal前の切断、
+conversation/turn不一致、順序違反はretryable protocol errorとして表示し、同じ
+event IDのduplicateは表示しない。自動再接続は行わず、retry時は新しいturnを作る。
 
 ## 11. Feedback要件
 
