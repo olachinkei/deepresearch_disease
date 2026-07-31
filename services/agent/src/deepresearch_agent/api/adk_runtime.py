@@ -332,6 +332,7 @@ def _to_adk_event(
                 "sourceType": (
                     "internal" if source.source_kind.value == "internal" else "web"
                 ),
+                "verificationStatus": source.verification_status.value,
             }
             for source in event.result.sources
         ]

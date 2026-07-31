@@ -168,6 +168,12 @@ reconnectせず、retryは新しいturnとして実行する。
 timeout/cancelの内部eventは安全なrun manifestを持ち、本文を含まない
 `finish_reason`と分類済みflagを記録する。terminal送信後のdeltaやtool結果は禁止する。
 
+completed eventのstructured source summaryはBFFで検証し、assistant message metadata
+schema `1.0` として保存する。保存・表示対象はsource count、title、credentialを含まない
+HTTP(S) canonical URL、`internal` / `web`分類、verification statusに限定する。internal
+sourceのURL、excerpt、tool生結果はbrowserへ渡さない。Repositoryは`metadata_json`を
+Zodでparseし、malformed値はsource summaryだけを破棄する。
+
 ## 8. Research pipeline
 
 ```text

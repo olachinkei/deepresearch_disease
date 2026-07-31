@@ -20,6 +20,7 @@ import {
   ConversationRepository,
   createConversationTitle,
 } from "~/features/conversation/repository.server";
+import { buildAssistantMessageMetadata } from "~/features/conversation/message-metadata";
 import { IdentityRepository } from "~/features/identity/repository.server";
 import { ensureLocalIdentity } from "~/features/identity/service.server";
 import { getAppDatabase } from "~/shared/database/client.server";
@@ -227,11 +228,11 @@ export async function action({ request }: Route.ActionArgs) {
                   conversationId: conversation.id,
                   turnId: turn.turnId,
                   content: finalAnswer,
-                  metadata: {
+                  metadata: buildAssistantMessageMetadata({
                     sourceCount,
                     sourceSummary: event.data.sourceSummary,
-                  },
-              });
+                  }),
+                });
               if (!transitioned) {
                 await sendCancelledIfPersisted(
                   event.eventId,

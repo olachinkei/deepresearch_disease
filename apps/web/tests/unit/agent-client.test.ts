@@ -83,12 +83,14 @@ describe("HttpAgentClient", () => {
                 title: "First excerpt",
                 url: "https://example.test/same-document",
                 sourceType: "web",
+                verificationStatus: "verified",
               },
               {
                 id: "E2",
                 title: "Second excerpt",
                 url: "https://example.test/same-document",
                 sourceType: "web",
+                verificationStatus: "unverified",
               },
             ],
           },
@@ -126,7 +128,10 @@ describe("HttpAgentClient", () => {
       type: "completed",
       data: {
         sourceCount: 2,
-        sourceSummary: [{ id: "E1" }, { id: "E2" }],
+        sourceSummary: [
+          { id: "E1", verificationStatus: "verified" },
+          { id: "E2", verificationStatus: "unverified" },
+        ],
       },
     });
     expect(serialized).not.toContain("秘密の表示名");
@@ -144,6 +149,40 @@ describe("HttpAgentClient", () => {
         { conversationId, turnId },
       ),
     ).toBeUndefined();
+  });
+
+  it("drops an unsafe source summary without exposing its raw fields", () => {
+    const event = sanitizeAgentEvent(
+      {
+        id: "unsafe-source-event",
+        content: { parts: [{ text: "# Safe answer" }] },
+        customMetadata: {
+          kind: "completed",
+          conversation_id: conversationId,
+          turn_id: turnId,
+          event_sequence: 0,
+          source_count: 1,
+          source_summary: [
+            {
+              id: "E1",
+              title: "Unsafe source",
+              url: "javascript:RAW_INTERNAL_EXCERPT",
+              sourceType: "web",
+              verificationStatus: "verified",
+              excerpt: "RAW_INTERNAL_EXCERPT",
+            },
+          ],
+        },
+      },
+      { conversationId, turnId },
+    );
+
+    expect(event).toMatchObject({
+      type: "completed",
+      data: { sourceCount: 1 },
+    });
+    expect(event?.data).not.toHaveProperty("sourceSummary");
+    expect(JSON.stringify(event)).not.toContain("RAW_INTERNAL_EXCERPT");
   });
 
   it("deduplicates event IDs and requires an ordered terminal stream", async () => {

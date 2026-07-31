@@ -173,6 +173,7 @@ const server = createServer((request, response) => {
               title: "Mock publication",
               url: "https://example.org/paper-1",
               sourceType: "web",
+              verificationStatus: "verified",
             },
           ],
         },

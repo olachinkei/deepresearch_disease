@@ -16,6 +16,11 @@ import {
   turns,
 } from "~/shared/database/schema";
 import type { ResearchRequest } from "~/features/research/schema";
+import {
+  parseAssistantMessageMetadata,
+  serializeAssistantMessageMetadata,
+  type AssistantMessageMetadata,
+} from "./message-metadata";
 
 async function withSqliteBusyRetry<T>(operation: () => Promise<T>) {
   for (let attempt = 0; ; attempt += 1) {
@@ -119,7 +124,16 @@ export class ConversationRepository {
           asc(transcriptMessages.createdAt),
         ),
     ]);
-    const messages = messageRows.map((row) => row.transcript_messages);
+    const messages = messageRows.map((row) => {
+      const { metadataJson, ...message } = row.transcript_messages;
+      return {
+        ...message,
+        sourceMetadata:
+          message.role === "assistant"
+            ? parseAssistantMessageMetadata(metadataJson)
+            : undefined,
+      };
+    });
     return { conversation, turns: conversationTurns, messages };
   }
 
@@ -166,7 +180,7 @@ export class ConversationRepository {
     conversationId: string;
     turnId: string;
     content: string;
-    metadata?: Record<string, unknown>;
+    metadata?: AssistantMessageMetadata;
   }) {
     const id = randomUUID();
     await this.db.insert(transcriptMessages).values({
@@ -176,7 +190,7 @@ export class ConversationRepository {
       role: "assistant",
       content: input.content,
       metadataJson: input.metadata
-        ? JSON.stringify(input.metadata)
+        ? serializeAssistantMessageMetadata(input.metadata)
         : undefined,
     });
     return id;
@@ -186,7 +200,7 @@ export class ConversationRepository {
     conversationId: string;
     turnId: string;
     content: string;
-    metadata?: Record<string, unknown>;
+    metadata?: AssistantMessageMetadata;
   }) {
     return withSqliteBusyRetry(() =>
       this.db.transaction(async (transaction) => {
@@ -215,7 +229,7 @@ export class ConversationRepository {
           role: "assistant",
           content: input.content,
           metadataJson: input.metadata
-            ? JSON.stringify(input.metadata)
+            ? serializeAssistantMessageMetadata(input.metadata)
             : undefined,
         });
         return true;

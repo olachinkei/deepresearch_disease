@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 
+import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { ConversationRepository } from "~/features/conversation/repository.server";
+import { buildAssistantMessageMetadata } from "~/features/conversation/message-metadata";
 import { IdentityRepository } from "~/features/identity/repository.server";
 import { researchRequestSchema } from "~/features/research/schema";
+import { transcriptMessages } from "~/shared/database/schema";
 
 import { createTestDatabase } from "../test-database";
 
@@ -48,7 +51,18 @@ describe("conversation repositories", () => {
       conversationId: conversation.id,
       turnId: first.turnId,
       content: "# 結論\n根拠があります。",
-      metadata: { sourceCount: 4 },
+      metadata: buildAssistantMessageMetadata({
+        sourceCount: 4,
+        sourceSummary: [
+          {
+            id: "I1",
+            title: "Synthetic internal record",
+            url: "https://internal.example.test/raw-location",
+            sourceType: "internal",
+            verificationStatus: "unverified",
+          },
+        ],
+      }),
     });
     await repository.markCompleted(first.turnId);
     const second = await repository.beginTurn({
@@ -66,6 +80,18 @@ describe("conversation repositories", () => {
       "# 結論\n根拠があります。",
       "Compare negative evidence.",
     ]);
+    expect(detail?.messages[1]?.sourceMetadata).toMatchObject({
+      schemaVersion: "1.0",
+      sourceCount: 4,
+      sourceSummary: [
+        {
+          id: "I1",
+          sourceType: "internal",
+          verificationStatus: "unverified",
+        },
+      ],
+    });
+    expect(detail?.messages[1]?.sourceMetadata?.sourceSummary?.[0]?.url).toBeUndefined();
   });
 
   it("does not return another local user's conversation", async () => {
@@ -164,5 +190,48 @@ describe("conversation repositories", () => {
       "completed",
       "cancelled",
     ]);
+  });
+
+  it("does not return malformed persisted metadata or raw internal fields", async () => {
+    const userId = randomUUID();
+    await new IdentityRepository(testDatabase.db).create({
+      id: userId,
+      displayName: "Metadata corruption test",
+    });
+    const repository = new ConversationRepository(testDatabase.db);
+    const conversation = await repository.create({
+      userId,
+      title: "Malformed metadata",
+      research: researchRequestSchema.parse({ disease: "ischemic stroke" }),
+    });
+    const turn = await repository.beginTurn({
+      conversationId: conversation.id,
+      userId,
+      query: "Synthetic query",
+    });
+    const messageId = await repository.appendAssistantMessage({
+      conversationId: conversation.id,
+      turnId: turn.turnId,
+      content: "# Safe answer",
+      metadata: buildAssistantMessageMetadata({ sourceCount: 1 }),
+    });
+    await testDatabase.db
+      .update(transcriptMessages)
+      .set({
+        metadataJson: JSON.stringify({
+          schemaVersion: "1.0",
+          sourceCount: 1,
+          toolResponse: "RAW_INTERNAL_EXCERPT",
+        }),
+      })
+      .where(eq(transcriptMessages.id, messageId));
+
+    const detail = await repository.getDetail(conversation.id, userId);
+    const assistant = detail?.messages.find(
+      (message) => message.role === "assistant",
+    );
+    expect(assistant?.sourceMetadata).toBeUndefined();
+    expect(JSON.stringify(detail)).not.toContain("RAW_INTERNAL_EXCERPT");
+    expect(JSON.stringify(detail)).not.toContain("metadataJson");
   });
 });

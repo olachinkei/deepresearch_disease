@@ -1,3 +1,7 @@
+import type { FeedbackView } from "~/features/feedback/schema";
+
+import type { AssistantMessageMetadata } from "./message-metadata";
+
 export type ConversationSummary = {
   id: string;
   title: string;
@@ -12,6 +16,7 @@ export type TranscriptView = {
   role: "user" | "assistant";
   content: string;
   createdAt: string;
+  sourceMetadata?: AssistantMessageMetadata;
 };
 
 export type TurnStatusView = {
@@ -35,4 +40,3 @@ export type ActiveConversationView = {
   messages: TranscriptView[];
   feedbackByTurn: Record<string, FeedbackView>;
 };
-import type { FeedbackView } from "~/features/feedback/schema";
