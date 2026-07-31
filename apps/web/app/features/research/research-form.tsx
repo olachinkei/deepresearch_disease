@@ -69,7 +69,11 @@ export function ResearchForm({
         引用付きの研究レポートにまとめます。
       </p>
 
-      <form className="research-card" onSubmit={submit}>
+      <form
+        aria-describedby={error ? "research-form-error" : undefined}
+        className="research-card"
+        onSubmit={submit}
+      >
         <div className="form-card-header">
           <div className="icon-tile">
             <FlaskConical aria-hidden size={22} />
@@ -154,7 +158,11 @@ export function ResearchForm({
           </label>
         </div>
 
-        {error ? <p className="form-error">{error}</p> : null}
+        {error ? (
+          <p className="form-error" id="research-form-error" role="alert">
+            {error}
+          </p>
+        ) : null}
 
         <div className="form-card-footer">
           <p>

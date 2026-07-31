@@ -5,7 +5,12 @@ import {
   ThumbsUp,
   X,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 
 import { FEEDBACK_REASONS } from "~/shared/domain-values";
 
@@ -39,12 +44,30 @@ export function FeedbackControls({
   const [editing, setEditing] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
+  const [announceSuccess, setAnnounceSuccess] = useState(false);
+  const negativeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const reasonSelectRef = useRef<HTMLSelectElement | null>(null);
+  const successRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      reasonSelectRef.current?.focus();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (feedback && !editing && announceSuccess) {
+      successRef.current?.focus();
+      setAnnounceSuccess(false);
+    }
+  }, [announceSuccess, editing, feedback]);
 
   async function send(input: FeedbackInput) {
     setSending(true);
     setError(undefined);
     try {
       await onSubmit(turnId, input);
+      setAnnounceSuccess(true);
       setOpen(false);
       setEditing(false);
     } catch {
@@ -77,7 +100,14 @@ export function FeedbackControls({
           ? "同期中"
           : "同期待ち";
     return (
-      <div className="feedback-thanks">
+      <div
+        aria-atomic="true"
+        aria-live="polite"
+        className="feedback-thanks"
+        ref={successRef}
+        role="status"
+        tabIndex={-1}
+      >
         <Check aria-hidden size={15} />
         <span>
           フィードバックを保存しました（
@@ -114,6 +144,7 @@ export function FeedbackControls({
           className="icon-button"
           disabled={sending}
           onClick={() => setOpen(true)}
+          ref={negativeButtonRef}
           type="button"
         >
           <ThumbsDown aria-hidden size={16} />
@@ -128,13 +159,22 @@ export function FeedbackControls({
             <button
               aria-label="閉じる"
               className="icon-button"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                negativeButtonRef.current?.focus();
+              }}
               type="button"
             >
               <X aria-hidden size={15} />
             </button>
           </div>
-          <select aria-label="改善理由" defaultValue="" name="reason" required>
+          <select
+            aria-label="改善理由"
+            defaultValue=""
+            name="reason"
+            ref={reasonSelectRef}
+            required
+          >
             <option disabled value="">
               理由を選択
             </option>
@@ -150,7 +190,11 @@ export function FeedbackControls({
             placeholder="補足があれば入力してください（任意）"
             rows={3}
           />
-          {error ? <p className="form-error">{error}</p> : null}
+          {error ? (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          ) : null}
           <button className="secondary-button" disabled={sending} type="submit">
             {sending ? "保存中…" : "送信"}
           </button>

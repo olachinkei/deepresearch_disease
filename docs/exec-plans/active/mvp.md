@@ -177,7 +177,9 @@
 - [x] multi-turnと再読込を実装する。
 - [x] feedback UIとローカルqueueを実装する。
 - [x] feedbackのturn/user一意性、revision同期、再読込後の状態復元を実装する。
-- [ ] Noto Sans JPとLucideを用いた最低限のaccessibilityを確認する。
+- [x] Noto Sans JPとLucideを用い、axe、keyboard、mobile focus、live region、
+  reduced motionのaccessibility baselineを確認する。検証項目は
+  [Web Accessibility Baseline Checklist](../../accessibility-checklist.md)へ記録する。
 
 ### Exit criteria
 
