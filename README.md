@@ -72,3 +72,6 @@ git add <公開対象>
 既知リスクは[完了済み実行計画](./docs/exec-plans/completed/mvp.md)に記録している。
 合成・未SME reviewの評価結果は科学的・臨床的releaseを許可せず、
 `scientific_release_status=ineligible`を維持する。
+
+デモリリースは`v0.1.0`。変更内容は[CHANGELOG](./CHANGELOG.md)、再現・検証手順は
+[demo release runbook](./docs/runbooks/demo-release.md)を参照する。
