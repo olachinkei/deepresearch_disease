@@ -24,7 +24,10 @@ from deepresearch_agent.application.workflow import ResearchWorkflow
 from deepresearch_agent.domain.models import WorkflowEvent
 from deepresearch_agent.governance.approvals import log_approval_decisions
 from deepresearch_agent.infrastructure.corpus import CorpusRepository
-from deepresearch_agent.infrastructure.embeddings import HashEmbeddingProvider
+from deepresearch_agent.infrastructure.embeddings import (
+    GeminiEmbeddingProvider,
+    HashEmbeddingProvider,
+)
 from deepresearch_agent.infrastructure.exa import ExaSearchClient
 from deepresearch_agent.infrastructure.feedback import (
     FeedbackRecord,
@@ -44,16 +47,31 @@ RunRegistry = AdkRunRegistry
 def build_workflow(settings: Settings) -> ResearchWorkflow:
     corpus = CorpusRepository(settings.database_path)
     corpus.initialize()
+    embedding_model = (
+        settings.embedding_model
+        if settings.embedding_provider == "gemini"
+        else HashEmbeddingProvider.model_name
+    )
+    corpus.assert_embedding_contract(
+        snapshot_id=settings.corpus_version,
+        model_name=embedding_model,
+        dimension=settings.embedding_dimension,
+    )
     exa = (
         ExaSearchClient(api_key=settings.exa_api_key.get_secret_value())
         if settings.live_exa_enabled and settings.exa_api_key
         else None
     )
     metadata_verifier = EuropePmcMetadataVerifier() if exa else None
+    embeddings = (
+        GeminiEmbeddingProvider(api_key=settings.google_api_key.get_secret_value())
+        if settings.embedding_provider == "gemini" and settings.google_api_key
+        else HashEmbeddingProvider()
+    )
     return ResearchWorkflow(
         settings=settings,
         corpus=corpus,
-        embeddings=HashEmbeddingProvider(),
+        embeddings=embeddings,
         sessions=AdkSessionStateStore(settings.session_database_path),
         exa=exa,
         metadata_verifier=metadata_verifier,

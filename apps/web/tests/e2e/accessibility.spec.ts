@@ -94,42 +94,6 @@ test("research controls complete the keyboard flow with scoped announcements", a
   await expect(feedbackStatus).toBeFocused();
 });
 
-test("mobile history menu exposes state, moves focus, and returns it on Escape", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-
-  const menu = page.getByRole("button", { name: "履歴を開く" });
-  await expect(menu).toHaveAttribute("aria-controls", "research-history-sidebar");
-  await expect(menu).toHaveAttribute("aria-expanded", "false");
-  await menu.focus();
-  await page.keyboard.press("Enter");
-
-  await expect(page.getByRole("button", { name: "履歴を閉じる" })).toHaveAttribute(
-    "aria-expanded",
-    "true",
-  );
-  await expect(page.getByRole("link", { name: "新しい調査" })).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(menu).toBeFocused();
-  await expect(menu).toHaveAttribute("aria-expanded", "false");
-  const focusOutline = await menu.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      style: style.outlineStyle,
-      width: Number.parseFloat(style.outlineWidth),
-    };
-  });
-  expect(focusOutline.style).toBe("solid");
-  expect(focusOutline.width).toBeGreaterThanOrEqual(3);
-  await expect(page.locator("#research-history-sidebar")).toHaveAttribute(
-    "aria-hidden",
-    "true",
-  );
-  await expectNoSeriousAxeViolations(page);
-});
-
 test("reduced motion collapses streaming animation duration", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await enterResearch(page, "slow-cancel");

@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS corpus_snapshot (
 
 CREATE TABLE IF NOT EXISTS document (
     id TEXT PRIMARY KEY,
+    snapshot_id TEXT NOT NULL,
     title TEXT NOT NULL,
     doi TEXT,
     pmid TEXT,
@@ -49,6 +50,7 @@ ON document(pmid) WHERE pmid IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS chunk (
     id TEXT PRIMARY KEY,
+    snapshot_id TEXT NOT NULL,
     document_id TEXT NOT NULL REFERENCES document(id) ON DELETE CASCADE,
     ordinal INTEGER NOT NULL,
     text TEXT NOT NULL,
@@ -95,40 +97,115 @@ class CorpusRepository:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with closing(sqlite3.connect(self.path)) as connection:
             connection.executescript(SCHEMA)
+            self._migrate_snapshot_columns(connection)
+
+    def assert_embedding_contract(
+        self, *, snapshot_id: str, model_name: str, dimension: int
+    ) -> None:
+        with closing(self._connect()) as connection:
+            document_count = int(connection.execute("SELECT count(*) FROM document").fetchone()[0])
+            row = connection.execute(
+                "SELECT manifest_json FROM corpus_snapshot WHERE id = ?", (snapshot_id,)
+            ).fetchone()
+        if document_count == 0:
+            return
+        if row is None:
+            raise ValueError("configured corpus snapshot does not exist")
+        try:
+            manifest = json.loads(row["manifest_json"])
+            embedding = manifest.get("embedding", {})
+            stored_model = embedding.get("model", manifest.get("embedding_model"))
+            stored_dimension = embedding.get("dimension", manifest.get("embedding_dimension"))
+        except (AttributeError, TypeError, ValueError) as exc:
+            del exc
+            raise ValueError("corpus snapshot embedding metadata is invalid") from None
+        if stored_model != model_name or stored_dimension != dimension:
+            raise ValueError("corpus snapshot embedding contract does not match provider")
+        with closing(self._connect()) as connection:
+            mismatched_documents = int(
+                connection.execute(
+                    "SELECT count(*) FROM document WHERE snapshot_id IS NULL OR snapshot_id != ?",
+                    (snapshot_id,),
+                ).fetchone()[0]
+            )
+            mismatched_chunks = int(
+                connection.execute(
+                    "SELECT count(*) FROM chunk WHERE snapshot_id IS NULL OR snapshot_id != ?",
+                    (snapshot_id,),
+                ).fetchone()[0]
+            )
+        if mismatched_documents or mismatched_chunks:
+            raise ValueError("corpus rows contain a mixed or missing snapshot ID")
 
     def save_snapshot(self, snapshot_id: str, created_at: str, manifest: dict[str, object]) -> None:
+        serialized = json.dumps(manifest, ensure_ascii=False, sort_keys=True)
         with closing(self._connect()) as connection:
+            existing = connection.execute(
+                "SELECT id, created_at, manifest_json FROM corpus_snapshot"
+            ).fetchall()
+            if existing:
+                if len(existing) != 1 or existing[0]["id"] != snapshot_id:
+                    raise ValueError("corpus database is already bound to another snapshot")
+                try:
+                    same_manifest = json.loads(existing[0]["manifest_json"]) == manifest
+                except (TypeError, ValueError):
+                    same_manifest = False
+                if existing[0]["created_at"] != created_at or not same_manifest:
+                    raise ValueError("immutable corpus snapshot cannot be modified")
+                return
             connection.execute(
                 """
                 INSERT INTO corpus_snapshot(id, created_at, manifest_json)
                 VALUES (?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    created_at=excluded.created_at,
-                    manifest_json=excluded.manifest_json
                 """,
-                (snapshot_id, created_at, json.dumps(manifest, ensure_ascii=False)),
+                (snapshot_id, created_at, serialized),
             )
             connection.commit()
 
-    def upsert_document(self, document: Document, chunks: Iterable[Chunk] = ()) -> None:
+    def upsert_document(
+        self,
+        document: Document,
+        chunks: Iterable[Chunk] = (),
+        *,
+        snapshot_id: str,
+    ) -> None:
         payload = json.dumps(document.model_dump(mode="json"), ensure_ascii=False)
+        prepared_chunks = tuple(chunks)
         with closing(self._connect()) as connection:
+            snapshot = connection.execute(
+                "SELECT 1 FROM corpus_snapshot WHERE id = ?", (snapshot_id,)
+            ).fetchone()
+            if snapshot is None:
+                raise ValueError("snapshot must be saved before corpus rows")
+            existing = connection.execute(
+                "SELECT snapshot_id, payload_json FROM document WHERE id = ?", (document.id,)
+            ).fetchone()
+            if existing is not None:
+                if existing["snapshot_id"] != snapshot_id:
+                    raise ValueError("document cannot move between immutable snapshots")
+                existing_chunks = connection.execute(
+                    """
+                    SELECT id, ordinal, text, page_start, page_end, section, token_count,
+                           embedding, embedding_dimension
+                    FROM chunk WHERE document_id = ? ORDER BY ordinal
+                    """,
+                    (document.id,),
+                ).fetchall()
+                if existing["payload_json"] != payload or not _chunks_equal(
+                    existing_chunks, prepared_chunks
+                ):
+                    raise ValueError("immutable corpus document cannot be modified")
+                return
             connection.execute(
                 """
                 INSERT INTO document(
-                    id, title, doi, pmid, canonical_url, source_kind, retracted, payload_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    title=excluded.title,
-                    doi=excluded.doi,
-                    pmid=excluded.pmid,
-                    canonical_url=excluded.canonical_url,
-                    source_kind=excluded.source_kind,
-                    retracted=excluded.retracted,
-                    payload_json=excluded.payload_json
+                    id, snapshot_id, title, doi, pmid, canonical_url, source_kind,
+                    retracted, payload_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     document.id,
+                    snapshot_id,
                     document.title,
                     document.doi,
                     document.pmid,
@@ -138,27 +215,17 @@ class CorpusRepository:
                     payload,
                 ),
             )
-            for chunk in chunks:
-                connection.execute("DELETE FROM chunk_fts WHERE chunk_id = ?", (chunk.id,))
+            for chunk in prepared_chunks:
                 connection.execute(
                     """
                     INSERT INTO chunk(
-                        id, document_id, ordinal, text, page_start, page_end, section,
-                        token_count, embedding, embedding_dimension
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(id) DO UPDATE SET
-                        document_id=excluded.document_id,
-                        ordinal=excluded.ordinal,
-                        text=excluded.text,
-                        page_start=excluded.page_start,
-                        page_end=excluded.page_end,
-                        section=excluded.section,
-                        token_count=excluded.token_count,
-                        embedding=excluded.embedding,
-                        embedding_dimension=excluded.embedding_dimension
+                        id, snapshot_id, document_id, ordinal, text, page_start, page_end,
+                        section, token_count, embedding, embedding_dimension
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         chunk.id,
+                        snapshot_id,
                         chunk.document_id,
                         chunk.ordinal,
                         chunk.text,
@@ -175,6 +242,39 @@ class CorpusRepository:
                     (chunk.id, document.title, chunk.text),
                 )
             connection.commit()
+
+    @staticmethod
+    def _migrate_snapshot_columns(connection: sqlite3.Connection) -> None:
+        document_columns = {
+            str(row[1]) for row in connection.execute("PRAGMA table_info(document)")
+        }
+        chunk_columns = {
+            str(row[1]) for row in connection.execute("PRAGMA table_info(chunk)")
+        }
+        if "snapshot_id" not in document_columns:
+            connection.execute("ALTER TABLE document ADD COLUMN snapshot_id TEXT")
+        if "snapshot_id" not in chunk_columns:
+            connection.execute("ALTER TABLE chunk ADD COLUMN snapshot_id TEXT")
+        snapshot_ids = [
+            str(row[0])
+            for row in connection.execute("SELECT id FROM corpus_snapshot ORDER BY id")
+        ]
+        if len(snapshot_ids) == 1:
+            connection.execute(
+                "UPDATE document SET snapshot_id = ? WHERE snapshot_id IS NULL",
+                (snapshot_ids[0],),
+            )
+            connection.execute(
+                "UPDATE chunk SET snapshot_id = ? WHERE snapshot_id IS NULL",
+                (snapshot_ids[0],),
+            )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS document_snapshot_idx ON document(snapshot_id)"
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS chunk_snapshot_idx ON chunk(snapshot_id)"
+        )
+        connection.commit()
 
     def get_document(self, document_id: str) -> Document | None:
         with closing(self._connect()) as connection:
@@ -291,3 +391,23 @@ class CorpusRepository:
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys=ON")
         return connection
+
+
+def _chunks_equal(rows: Sequence[sqlite3.Row], chunks: Sequence[Chunk]) -> bool:
+    if len(rows) != len(chunks):
+        return False
+    for row, chunk in zip(rows, chunks, strict=True):
+        if (
+            row["id"] != chunk.id
+            or row["ordinal"] != chunk.ordinal
+            or row["text"] != chunk.text
+            or row["page_start"] != chunk.page_start
+            or row["page_end"] != chunk.page_end
+            or row["section"] != chunk.section
+            or row["token_count"] != chunk.token_count
+            or row["embedding_dimension"]
+            != (len(chunk.embedding) if chunk.embedding else None)
+            or row["embedding"] != _encode_embedding(chunk.embedding)
+        ):
+            return False
+    return True

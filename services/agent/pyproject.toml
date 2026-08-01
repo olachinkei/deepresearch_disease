@@ -5,6 +5,7 @@ description = "Local-first ischemic-stroke drug-discovery research agent service
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+  "defusedxml>=0.7,<1",
   "fastapi>=0.116,<1",
   "google-adk[db]>=2.5,<2.6",
   "greenlet>=3.2,<4",
@@ -28,13 +29,17 @@ dev = [
   "pytest-cov>=6.2,<7",
   "respx>=0.22,<1",
   "ruff>=0.12,<1",
+  "types-defusedxml>=0.7,<1",
 ]
 
 [project.scripts]
 deepresearch-agent = "deepresearch_agent.cli:serve"
 collect-public-seed = "deepresearch_agent.seed.cli:main"
 analyze-flagged-traces = "deepresearch_agent.observability.flag_analysis:main"
+analyze-weave-signals = "deepresearch_agent.evaluation.weave_pilot:signal_analysis_main"
+export-weave-signal-pilot = "deepresearch_agent.evaluation.weave_pilot:signal_export_main"
 run-offline-eval = "deepresearch_agent.evaluation.runner:main"
+run-weave-pilot = "deepresearch_agent.evaluation.weave_pilot:main"
 validate-gold-dataset = "deepresearch_agent.evaluation.dataset_governance:main"
 
 [build-system]

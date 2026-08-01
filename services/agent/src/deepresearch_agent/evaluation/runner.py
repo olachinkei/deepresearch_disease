@@ -48,7 +48,7 @@ from deepresearch_agent.evaluation.workflow_adapter import (
     WorkflowEvaluationAdapter,
 )
 from deepresearch_agent.infrastructure.corpus import CorpusRepository
-from deepresearch_agent.infrastructure.embeddings import HashEmbeddingProvider
+from deepresearch_agent.infrastructure.embeddings import EmbeddingDocument, HashEmbeddingProvider
 from deepresearch_agent.infrastructure.sessions import AdkSessionStateStore
 from deepresearch_agent.settings import Settings
 
@@ -58,9 +58,7 @@ SCORER_VERSION = "v2"
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
 
 
@@ -72,8 +70,7 @@ def _load_fixture_bundle(
         governance = validate_gold_dataset_bundle(fixtures)
         if governance.errors:
             raise ValueError(
-                "Gold dataset governance validation failed: "
-                + ",".join(governance.errors)
+                "Gold dataset governance validation failed: " + ",".join(governance.errors)
             )
         manifest["sme_reviewed"] = governance.sme_reviewed
         manifest["scientific_gold"] = governance.scientific_gold
@@ -138,9 +135,7 @@ def evaluate_fixtures(fixtures: Path) -> dict[str, Any]:
         "recorded_mean_recall_at_10": fmean(recalls),
         "recorded_mean_ndcg_at_10": fmean(ndcgs),
         "frustration_positive": sum(bool(row["label"]) for row in frustration),
-        "frustration_hard_negative": sum(
-            bool(row["hard_negative"]) for row in frustration
-        ),
+        "frustration_hard_negative": sum(bool(row["hard_negative"]) for row in frustration),
         "release_decision": "not_evaluated",
     }
 
@@ -218,52 +213,58 @@ async def _seed_synthetic_corpus(
             " ".join(sorted(queries))
             + " Synthetic public evidence for deterministic workflow evaluation."
         )
-        embedding = (await embeddings.embed([text]))[0]
-        corpus.upsert_document(
-            Document(
-                id=document_id,
-                title=f"Synthetic ischemic stroke evidence {document_id}",
-                abstract=text,
-                canonical_url=HttpUrl(f"https://example.org/{document_id}"),
-                source_kind=SourceKind.PUBLIC,
-                access_class="public",
-                provenance=["synthetic:evaluation"],
-            ),
-            [
-                Chunk(
-                    id=f"{document_id}:chunk:0",
-                    document_id=document_id,
-                    ordinal=0,
-                    text=text,
-                    token_count=max(1, len(text) // 4),
-                    embedding=embedding,
-                )
-            ],
+        await _seed_synthetic_document(
+            corpus=corpus,
+            embeddings=embeddings,
+            snapshot_id=snapshot_id,
+            document_id=document_id,
+            title=f"Synthetic ischemic stroke evidence {document_id}",
+            text=text,
         )
     for document_id in sorted(distractors):
         text = f"Synthetic unrelated control document {document_id}."
-        embedding = (await embeddings.embed([text]))[0]
-        corpus.upsert_document(
-            Document(
-                id=document_id,
-                title=f"Synthetic control {document_id}",
-                abstract=text,
-                canonical_url=HttpUrl(f"https://example.org/{document_id}"),
-                source_kind=SourceKind.PUBLIC,
-                access_class="public",
-                provenance=["synthetic:evaluation"],
-            ),
-            [
-                Chunk(
-                    id=f"{document_id}:chunk:0",
-                    document_id=document_id,
-                    ordinal=0,
-                    text=text,
-                    token_count=max(1, len(text) // 4),
-                    embedding=embedding,
-                )
-            ],
+        await _seed_synthetic_document(
+            corpus=corpus,
+            embeddings=embeddings,
+            snapshot_id=snapshot_id,
+            document_id=document_id,
+            title=f"Synthetic control {document_id}",
+            text=text,
         )
+
+
+async def _seed_synthetic_document(
+    *,
+    corpus: CorpusRepository,
+    embeddings: HashEmbeddingProvider,
+    snapshot_id: str,
+    document_id: str,
+    title: str,
+    text: str,
+) -> None:
+    embedding = (await embeddings.embed_documents([EmbeddingDocument(text=text, title=title)]))[0]
+    corpus.upsert_document(
+        Document(
+            id=document_id,
+            title=title,
+            abstract=text,
+            canonical_url=HttpUrl(f"https://example.org/{document_id}"),
+            source_kind=SourceKind.PUBLIC,
+            access_class="public",
+            provenance=["synthetic:evaluation"],
+        ),
+        [
+            Chunk(
+                id=f"{document_id}:chunk:0",
+                document_id=document_id,
+                ordinal=0,
+                text=text,
+                token_count=max(1, len(text) // 4),
+                embedding=embedding,
+            )
+        ],
+        snapshot_id=snapshot_id,
+    )
 
 
 async def _execute_suites(
@@ -348,21 +349,14 @@ async def _execute_suites(
 
     frustration_rows = datasets["frustration"]
     labels = [bool(row["label"]) for row in frustration_rows]
-    predictions = [
-        _synthetic_frustration_prediction(str(row["text"]))
-        for row in frustration_rows
-    ]
+    predictions = [_synthetic_frustration_prediction(str(row["text"])) for row in frustration_rows]
     classification = frustration_metrics(labels, predictions)
     metric_samples["frustration_precision"].append(classification.precision)
     metric_samples["frustration_recall"].append(classification.recall)
 
-    context_ratios = [
-        observation.result.manifest.context_ratio for observation in all_observations
-    ]
+    context_ratios = [observation.result.manifest.context_ratio for observation in all_observations]
     observed_metrics = {
-        name: (fmean(values), len(values))
-        for name, values in metric_samples.items()
-        if values
+        name: (fmean(values), len(values)) for name, values in metric_samples.items() if values
     }
     observed_metrics["recall_at_10"] = (
         fmean(retrieval_scores),
@@ -413,9 +407,7 @@ def _score_observation(
     claims = [claim.model_dump(mode="json") for claim in result.claims]
     evidence = [item.model_dump(mode="json") for item in observation.packed_evidence]
     source_ids = [source.evidence_id for source in result.sources]
-    cited_ids = [
-        evidence_id for claim in result.claims for evidence_id in claim.evidence_ids
-    ]
+    cited_ids = [evidence_id for claim in result.claims for evidence_id in claim.evidence_ids]
     packed_ids = [item.id for item in observation.packed_evidence]
 
     schema = schema_score(output)
@@ -465,28 +457,20 @@ def _score_observation(
         fmean(float(item["score"]) for item in stage_scores) if stage_scores else 1.0
     )
     metric_samples["conflict_handling"].append(float(conflict["score"]))
-    metric_samples["source_status"].append(
-        float(entailment["retracted_positive_uses"] == 0)
-    )
+    metric_samples["source_status"].append(float(entailment["retracted_positive_uses"] == 0))
     metric_samples["truncation"].append(float(truncation["score"]))
 
     incident_counts["fabricated_citations"] += len(resolvability["unresolved"])
     incident_counts["citation_registry_mismatches"] += int(not registry["passed"])
-    incident_counts["unsupported_claims"] += len(
-        entailment["unsupported_claim_indexes"]
-    )
-    incident_counts["retracted_positive_uses"] += int(
-        entailment["retracted_positive_uses"]
-    )
+    incident_counts["unsupported_claims"] += len(entailment["unsupported_claim_indexes"])
+    incident_counts["retracted_positive_uses"] += int(entailment["retracted_positive_uses"])
     incident_counts["scope_violations"] += int(not scope["passed"])
     incident_counts["tool_loops"] += int(
         "duplicate_query_loop" in result.manifest.flags
         or "search_budget_exceeded" in result.manifest.flags
     )
     incident_counts["truncations"] += int(not truncation["passed"])
-    incident_counts["retrieved_before_cited_violations"] += len(
-        retrieved["violations"]
-    )
+    incident_counts["retrieved_before_cited_violations"] += len(retrieved["violations"])
 
 
 def _synthetic_frustration_prediction(text: str) -> bool:
@@ -521,10 +505,7 @@ async def _async_main() -> None:
     print(json.dumps(summary.model_dump(mode="json"), indent=2))
     if summary.technical_smoke_status != GateStatus.PASSED:
         raise SystemExit(1)
-    if (
-        args.require_scientific_release
-        and summary.scientific_release_status != GateStatus.PASSED
-    ):
+    if args.require_scientific_release and summary.scientific_release_status != GateStatus.PASSED:
         raise SystemExit(2)
 
 

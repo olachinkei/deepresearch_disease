@@ -10,7 +10,7 @@ import fitz
 from pydantic import BaseModel, ConfigDict
 
 from deepresearch_agent.domain.models import Chunk, Document, SourceKind
-from deepresearch_agent.infrastructure.embeddings import EmbeddingProvider
+from deepresearch_agent.infrastructure.embeddings import EmbeddingDocument, EmbeddingProvider
 
 _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
 _SECTION_HEADING = re.compile(r"^[A-Z][A-Z0-9 :/&-]{2,80}$")
@@ -174,7 +174,9 @@ async def ingest_internal_pdf(
         )
         chunks.extend(page_chunks)
         ordinal += len(page_chunks)
-    embeddings = await embedding_provider.embed([chunk.text for chunk in chunks])
+    embeddings = await embedding_provider.embed_documents(
+        [EmbeddingDocument(text=chunk.text, title=record.title) for chunk in chunks]
+    )
     chunks = [
         chunk.model_copy(update={"embedding": embedding})
         for chunk, embedding in zip(chunks, embeddings, strict=True)

@@ -319,11 +319,8 @@ export default function Home() {
         }
         if (event.type === "cancelled") {
           terminalConversationId = event.data.conversationId;
-          updateTurn(event.data.turnId, {
-            status: "cancelled",
-            errorCode: null,
-            retryable: true,
-          });
+          // Rehydrate the persisted status after navigation so retry cannot
+          // race the conversation loader while cancellation is settling.
           setStreamingAnswer("");
           setProgress(undefined);
           return;
@@ -418,20 +415,20 @@ export default function Home() {
         status: TurnStatusView["status"];
         conversationId: string;
       };
-      if (!result.cancelled) {
+      if (!result.cancelled && result.status !== "cancelled") {
         return;
       }
-      updateTurn(currentTurnId, {
-        status: "cancelled",
-        errorCode: null,
-        retryable: true,
-      });
       setStreamingAnswer("");
       setProgress(undefined);
-      navigate(
+      abortController.current?.abort();
+      setCurrentTurnId(undefined);
+      abortController.current = null;
+      await navigate(
         `/?conversation=${encodeURIComponent(result.conversationId)}`,
         { replace: true },
       );
+      setBusy(false);
+      return;
     }
     abortController.current?.abort();
     setBusy(false);

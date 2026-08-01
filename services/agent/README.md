@@ -106,6 +106,45 @@ The checked-in `public-seed-v1` snapshot contains 220 unique records spanning 19
 54 through 2010, 53 from 2011–2017, 58 from 2018–2022, and 55 from 2023 onward.
 Its exact runtime snapshot ID is `public-seed-20260730-c8457953`.
 
+For the approved public/synthetic demo, rebuild that manifest into a separate Gemini
+Embedding 2 database. The explicit flag applies only to public manifest title/abstract
+text and does not authorize internal documents:
+
+```bash
+uv run --env-file ../../.env collect-public-seed \
+  --input-manifest ../../data/public_seed/public-seed-v1.json \
+  --output ../../data/public_seed/public-seed-gemini-20260801.json \
+  --database data/corpus-gemini.sqlite \
+  --embedding-provider gemini \
+  --allow-public-gemini-embeddings
+```
+
+Runtime use additionally sets `AGENT_EMBEDDING_PROVIDER=gemini`, pins
+`AGENT_EMBEDDING_MODEL=gemini-embedding-2` and
+`AGENT_EMBEDDING_DIMENSION=768`, and points `AGENT_CORPUS_VERSION` at the new snapshot.
+Startup fails if the configured provider and snapshot embedding contract differ.
+
+To add allowlisted OA body text, opt in separately. This path retrieves only Europe PMC
+OA JATS XML, writes a content-free ingestion report, and keeps every rejected item as
+metadata/abstract-only with a stable reason:
+
+```bash
+uv run --env-file ../../.env collect-public-seed \
+  --input-manifest ../../data/public_seed/public-seed-gemini-20260801.json \
+  --output ../../data/public_seed/public-seed-oa-gemini-20260801.json \
+  --database data/corpus-oa-gemini.sqlite \
+  --embedding-provider gemini \
+  --allow-public-gemini-embeddings \
+  --include-oa-full-text \
+  --oa-report ../../data/public_seed/public-seed-oa-gemini-20260801.oa-report.json
+```
+
+The 2026-08-01 technical build stored 12 allowlisted OA bodies, retained 208 records as
+metadata/abstract-only, produced 339 total chunks, and pinned snapshot
+`public-seed-20260801-63940c61`. It is a non-gold technical corpus pending SME review.
+The exact inclusion and license rules are documented in
+[`docs/corpus-inclusion-policy.md`](../../docs/corpus-inclusion-policy.md).
+
 ## Data policy
 
 - The disease scope is fixed to `ischemic stroke`.

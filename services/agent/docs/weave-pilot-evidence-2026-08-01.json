@@ -1,0 +1,71 @@
+{
+  "status": "technical_pilot_completed",
+  "created_at": "2026-08-01T00:43:28.031707Z",
+  "project_url": "https://wandb.ai/agent-lab/deepresearch-disease",
+  "evaluation_name": "ischemic-stroke-synthetic-pilot",
+  "dataset_name": "ischemic-stroke-synthetic-pilot-dataset",
+  "evaluation_ref": "weave:///agent-lab/deepresearch-disease/object/ischemic-stroke-synthetic-pilot:h7SC4HpV2RhsGz4j9ubyYFW28HzF3B2LRQ036kgddDY",
+  "dataset_ref": "weave:///agent-lab/deepresearch-disease/object/ischemic-stroke-synthetic-pilot-dataset:oI0zfNgRyShCMhHZToUqI2j9X0Mmd2s2yezlQLTwqY0",
+  "case_count": 4,
+  "versions": {
+    "agent": "0.1.0",
+    "prompt": "1.0.0",
+    "prompt_sha256": "f100a4bd495edb7fc1dd08dd62d286e729cdbbb3873da17caee924d80b9f42c7",
+    "model": "deterministic-synthesizer-v1",
+    "corpus": "synthetic-weave-v1",
+    "embedding": "local-hash-embedding-v1",
+    "dataset": "v1",
+    "scorer": "v2"
+  },
+  "signal_configuration": [
+    {
+      "name": "User Frustration",
+      "kind": "tag",
+      "sample_rate": 1.0,
+      "preset": true,
+      "purpose": "pilot correlation with the synthetic frustration labels"
+    },
+    {
+      "name": "User Satisfaction",
+      "kind": "rating",
+      "sample_rate": 1.0,
+      "preset": true,
+      "purpose": "pilot correlation with explicit synthetic satisfaction cases"
+    },
+    {
+      "name": "Low Quality Response",
+      "kind": "tag",
+      "sample_rate": 0.2,
+      "preset": true,
+      "purpose": "cost-controlled response-quality sampling"
+    },
+    {
+      "name": "Medical Overclaim",
+      "kind": "tag",
+      "sample_rate": 0.15,
+      "preset": false,
+      "purpose": "detect medical or scientific claims stronger than the evidence"
+    },
+    {
+      "name": "Unsupported Citation",
+      "kind": "tag",
+      "sample_rate": 0.15,
+      "preset": false,
+      "purpose": "detect claims whose cited source does not provide support"
+    }
+  ],
+  "aggregate_metric_names": [
+    "user_frustration",
+    "user_satisfaction_low",
+    "low_quality",
+    "medical_overclaim",
+    "unsupported_citation"
+  ],
+  "scientific_release_eligible": false,
+  "data_classification": "synthetic",
+  "limitations": [
+    "synthetic and not SME reviewed",
+    "not evidence for scientific or clinical release",
+    "Signals are post-hoc monitors, not safety guardrails"
+  ]
+}
