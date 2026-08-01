@@ -1,0 +1,55 @@
+{
+  "created_at": "2026-08-01T09:22:04.371134Z",
+  "window_start": "2026-08-01T09:19:51.740340Z",
+  "window_end": "2026-08-01T09:20:00.523591Z",
+  "project_url": "https://wandb.ai/agent-lab/deepresearch-disease",
+  "agent_trace": {
+    "agent_name": "deepresearch_agent-signals-pilot",
+    "operation_name": "invoke_agent",
+    "span_count": 20,
+    "invocation_count": 20,
+    "conversation_count": 20
+  },
+  "counts": {
+    "user_frustration": 5,
+    "low_quality": 0,
+    "medical_overclaim": 1,
+    "unsupported_citation": 2
+  },
+  "correlations": {
+    "user_frustration": {
+      "expected_positive": 5,
+      "matched": 5,
+      "true_positive": 5,
+      "false_positive": 0,
+      "observed_positive_precision": 1.0,
+      "tagged_positive_capture": 1.0
+    },
+    "low_quality": {
+      "expected_positive": 4,
+      "matched": 0,
+      "true_positive": 0,
+      "false_positive": 0,
+      "observed_positive_precision": null,
+      "tagged_positive_capture": 0.0
+    },
+    "medical_overclaim": {
+      "expected_positive": 4,
+      "matched": 1,
+      "true_positive": 1,
+      "false_positive": 0,
+      "observed_positive_precision": 1.0,
+      "tagged_positive_capture": 0.25
+    },
+    "unsupported_citation": {
+      "expected_positive": 4,
+      "matched": 2,
+      "true_positive": 1,
+      "false_positive": 1,
+      "observed_positive_precision": 0.5,
+      "tagged_positive_capture": 0.25
+    }
+  },
+  "content_retrieved": false,
+  "scientific_release_eligible": false
+}

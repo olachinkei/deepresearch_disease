@@ -342,7 +342,7 @@ ADKのraw message / tool content captureは明示的に無効化する。最小�
 - source数
 - 決定的flag
 
-質問と最終回答だけを `input.value` / `output.value` として送る機能はfeature flag化する。公開・合成データでは有効にできるが、社内利用では承認まで無効とする。
+質問と最終回答だけを `input.value` / `output.value` として送る機能はfeature flag化する。Agents Signalsで同じ本文を読む場合は、同一gateの内側でOTel GenAI形式の `gen_ai.input.messages` / `gen_ai.output.messages` にも同じ質問と最終回答だけを複製できる。中間message、system instruction、tool payloadは追加しない。公開・合成データでは有効にできるが、社内利用では承認まで無効とする。
 
 raw OTelに必要なspan、属性、Signals、feedback連携が得られない場合、互換性spikeを失敗として記録する。runtime tracingを自動で `weave.init()` へ切り替えない。Weave SDKはoffline eval、feedback同期、trace分析に限定して使用する。
 
@@ -374,7 +374,7 @@ post-hoc品質監視には [Weave Agents Signals](https://docs.wandb.ai/weave/gu
 | Signal | 適用率 |
 | --- | ---: |
 | User Frustration | controlled pilotで100% |
-| User Satisfaction | controlled pilotで100% |
+| User Satisfaction | rating作成UIが利用可能な環境でのみ、別pilotで100% |
 | Low Quality Response | 20% |
 | custom medical overclaim | 10〜20% |
 | custom unsupported citation | 10〜20% |

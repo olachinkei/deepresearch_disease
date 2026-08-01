@@ -9,8 +9,9 @@ in the Agents span model: the legacy Calls API correctly reports zero Calls for
 these exports and must not be used to assess Agents ingestion.
 
 The versioned Weave Evaluation technical pilot also passes with four synthetic
-workflow cases. The remaining spike item is real Signals UI configuration and output validation.
-Signals are therefore not yet a release gate.
+workflow cases. The controlled Signals pilot passes with 20 synthetic Agent turns,
+four W&B Inference tag signals, and server-side aggregate analysis. Signals remain
+post-hoc monitors and are not a release safety guardrail.
 
 Runtime tracing uses the standard OTLP HTTP exporter only. It does not initialize
 the Weave SDK and must not fall back to `weave.init()` if export or mapping fails.
@@ -27,12 +28,25 @@ filtered analysis.
 | Token usage | Pass in real project | Gemini input and output tokens are populated |
 | Safe custom metadata | Pass in real project | `app.turn_id` and scalar budget/version fields are queryable through Agents custom attributes |
 | Content capture disabled | Pass in live privacy scan | nine spans contained no canary question, display/user identifier, API key, or raw tool content |
-| Optional input/output | Pass in unit tests | emitted only when enabled and classification is `public` or `synthetic` |
+| Optional input/output | Pass in unit and live Signals tests | emitted only when enabled and classification is `public` or `synthetic`; OTel GenAI message copies contain only the same question and final answer |
 | Feedback retry/idempotency | Pass in real project | `app.turn_id` resolves an Agent turn trace; repeat sync keeps one `wandb.agent_user_feedback` row |
 | Real W&B OTLP acceptance | Pass | direct public/synthetic protobuf export returned `SUCCESS` |
 | Agent span lookup | Pass | Agents span API returned the exported spans; legacy Calls API is not applicable |
 | Flag analysis | Pass in real project | server-side Agents filter returned one synthetic `tool_loop` row without content |
-| Agents Signals | Incomplete | real project configuration and output sampling remain |
+| Agents Signals | Pass in real project | 20 `deepresearch_agent-signals-pilot` turns reached the Agents model; W&B Inference read the GenAI messages and emitted tag results |
+
+The final bounded pilot window was `2026-08-01T09:19:51.740340Z` through
+`2026-08-01T09:20:00.523591Z`. The server-side Agents aggregate reported 20
+`invoke_agent` spans, 20 invocations, and 20 conversations for
+`deepresearch_agent-signals-pilot`. W&B Inference produced 5 User Frustration,
+0 Low Quality Response, 1 Medical Overclaim, and 2 Unsupported Citation matches.
+The sampled signal counts are a connectivity check, not a recall estimate. The
+sanitized aggregate is stored in `weave-signals-evidence-2026-08-01.json` and records
+`content_retrieved=false`.
+
+The current Signals UI exposes tag signals but no rating creation flow, so the
+verified set is User Frustration, Low Quality Response, Medical Overclaim, and
+Unsupported Citation. User Satisfaction is not claimed as configured.
 
 The Exa key passed a public publication-search smoke. The updated Google key
 passed an actual ADK `/run_sse` canary using `gemini-3.6-flash`: the turn completed

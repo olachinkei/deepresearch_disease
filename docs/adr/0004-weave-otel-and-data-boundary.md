@@ -21,6 +21,9 @@ https://trace.wandb.ai/agents/otel/v1/traces
 - ADKのraw message / tool content captureを明示的に無効化する。
 - 最小pluginはpseudonymous user ID、turn ID、version、budget、finish、citation、flag属性だけをroot spanへ追加する。
 - 質問と最終回答の送信は独立したfeature flagにする。
+- Agents Signalsへ渡す場合、同じgateの内側で質問と最終回答を
+  `gen_ai.input.messages` / `gen_ai.output.messages` にもOTel GenAI形式で複製する。
+  中間message、system instruction、tool payloadは複製しない。
 - 未承認の社内利用ではcontent送信を無効にする。
 - `app.turn_id` でAgents span APIをserver-side filterし、Agent turnの `trace_id` を後から解決してfeedbackを同期する。Agents endpointのspan検索に旧Call APIを使わない。
 - runtime tracingを自動で `weave.init()` へfallbackしない。

@@ -213,14 +213,42 @@ def test_exported_span_contains_only_allowlisted_non_content_metadata() -> None:
     ("input_enabled", "output_enabled", "expected"),
     [
         (False, False, {}),
-        (True, False, {"input.value": "synthetic q"}),
-        (False, True, {"output.value": "synthetic a"}),
+        (
+            True,
+            False,
+            {
+                "input.value": '[{"role":"user","content":"synthetic q"}]',
+                "gen_ai.input.messages": (
+                    '[{"role":"user","parts":'
+                    '[{"type":"text","content":"synthetic q"}]}]'
+                ),
+            },
+        ),
+        (
+            False,
+            True,
+            {
+                "output.value": '{"content":"synthetic a"}',
+                "gen_ai.output.messages": (
+                    '[{"role":"assistant","parts":'
+                    '[{"type":"text","content":"synthetic a"}]}]'
+                ),
+            },
+        ),
         (
             True,
             True,
             {
-                "input.value": "synthetic q",
-                "output.value": "synthetic a",
+                "input.value": '[{"role":"user","content":"synthetic q"}]',
+                "output.value": '{"content":"synthetic a"}',
+                "gen_ai.input.messages": (
+                    '[{"role":"user","parts":'
+                    '[{"type":"text","content":"synthetic q"}]}]'
+                ),
+                "gen_ai.output.messages": (
+                    '[{"role":"assistant","parts":'
+                    '[{"type":"text","content":"synthetic a"}]}]'
+                ),
             },
         ),
     ],
@@ -298,7 +326,13 @@ def test_internal_evidence_blocks_output_but_not_allowlisted_input() -> None:
         output_classification=output_classification,
         question="Approved public question",
         answer="Answer containing internal excerpt",
-    ) == {"input.value": "Approved public question"}
+    ) == {
+        "input.value": '[{"role":"user","content":"Approved public question"}]',
+        "gen_ai.input.messages": (
+            '[{"role":"user","parts":'
+            '[{"type":"text","content":"Approved public question"}]}]'
+        ),
+    }
 
 
 def test_trace_content_settings_default_closed_and_reject_legacy_enablement(
