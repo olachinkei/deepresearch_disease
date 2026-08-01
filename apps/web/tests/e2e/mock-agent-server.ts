@@ -131,7 +131,11 @@ const server = createServer((request, response) => {
       return;
     }
 
-    const delay = prompt.includes("slow-cancel") ? 2_000 : 250;
+    const delay = prompt.includes("slow-cancel")
+      ? 2_000
+      : prompt.includes("observe-progress")
+        ? 1_000
+        : 250;
     setTimeout(() => {
       if (cancelledTurns.has(turnId)) {
         sendEvent(response, {

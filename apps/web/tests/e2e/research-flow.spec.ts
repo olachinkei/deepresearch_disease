@@ -15,7 +15,10 @@ async function startResearch(
 test("research, streaming, follow-up, reload, and feedback", async ({
   page,
 }) => {
-  await startResearch(page, "Assess the translational evidence.");
+  await startResearch(
+    page,
+    "observe-progress Assess the translational evidence.",
+  );
 
   await expect(page.getByText("公開論文を検索しています。")).toBeVisible();
   await expect(
