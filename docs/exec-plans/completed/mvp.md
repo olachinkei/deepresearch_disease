@@ -2,11 +2,25 @@
 
 ## 1. Status
 
-- 状態: Active
+- 状態: Completed
+- 完了日: 2026-08-01
 - 対象: ローカルMVP
 - 正本: [instruction.md](../../../instruction.md)
 - アーキテクチャ: [ARCHITECTURE.md](../../../ARCHITECTURE.md)
 - セキュリティ: [SECURITY.md](../../SECURITY.md)
+
+### 完了証跡
+
+- technical smoke: 合格
+- scientific release: `ineligible`（合成・未SME review datasetのため）
+- W&B Agents / Signals:
+  [sanitized evidence](../../../services/agent/docs/weave-signals-evidence-2026-08-01.json)
+- Weave Evaluation:
+  [sanitized evidence](../../../services/agent/docs/weave-pilot-evidence-2026-08-01.json)
+- 最終CI: PR [#34](https://github.com/olachinkei/deepresearch_disease/pull/34)
+
+この完了判定は公開・合成データ限定のtechnical MVPに対するものであり、科学的・臨床的
+妥当性を承認しない。SME gold、scientific embedding品質評価、機密データpilotは後続作業とする。
 
 ## 2. 完了の定義
 
@@ -255,7 +269,7 @@
 - 必須testと品質gateがすべて合格する。
 - デモ用technical release gateが合格し、scientific releaseは`ineligible`となる。
 - 残る既知リスクとMVP外の項目を文書化する。
-- active planをcompletedへ移す判断ができる。
+- active planをcompletedへ移し、完了証跡と後続範囲を固定する。
 
 ## 12. リスクと対策
 
@@ -287,3 +301,6 @@
 - [ ] 質問のW&B `input.value` 送信
 - [ ] 最終回答のW&B `output.value` 送信
 - [ ] 機密標的仮説のExa送信
+
+これら5項目は未完了のMVP作業ではなく、別deploymentで承認が記録されるまで意図的に
+無効な機密機能である。したがってtechnical MVPの完了条件には含めない。

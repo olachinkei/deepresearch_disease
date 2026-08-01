@@ -8,7 +8,7 @@
 
 - [MVPプロダクト仕様](docs/product-specs/mvp.md)
 - [アーキテクチャ](ARCHITECTURE.md)
-- [実行計画](docs/exec-plans/active/mvp.md)
+- [完了済みMVP実行計画](docs/exec-plans/completed/mvp.md)
 - [セキュリティとデータ取扱い](docs/SECURITY.md)
 - [ADR](docs/adr/)
 
