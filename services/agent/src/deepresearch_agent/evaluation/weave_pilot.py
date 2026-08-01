@@ -29,7 +29,12 @@ from deepresearch_agent.evaluation.workflow_adapter import (
 from deepresearch_agent.infrastructure.corpus import CorpusRepository
 from deepresearch_agent.infrastructure.embeddings import HashEmbeddingProvider
 from deepresearch_agent.infrastructure.sessions import AdkSessionStateStore
-from deepresearch_agent.observability.otel import configure_otel, set_safe_span_attributes
+from deepresearch_agent.observability.otel import (
+    TraceDataClassification,
+    configure_otel,
+    set_safe_span_attributes,
+    trace_content_attributes,
+)
 from deepresearch_agent.settings import Settings
 
 PILOT_NAME = "ischemic-stroke-synthetic-pilot"
@@ -56,13 +61,6 @@ SIGNAL_SPECS = (
         sample_rate=1.0,
         preset=True,
         purpose="pilot correlation with the synthetic frustration labels",
-    ),
-    SignalSpec(
-        name="User Satisfaction",
-        kind="rating",
-        sample_rate=1.0,
-        preset=True,
-        purpose="pilot correlation with explicit synthetic satisfaction cases",
     ),
     SignalSpec(
         name="Low Quality Response",
@@ -118,6 +116,16 @@ class SignalCorrelation(BaseModel):
     tagged_positive_capture: float
 
 
+class AgentTraceAggregate(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    agent_name: str
+    operation_name: str
+    span_count: int
+    invocation_count: int
+    conversation_count: int
+
+
 class SignalAnalysisEvidence(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -125,6 +133,7 @@ class SignalAnalysisEvidence(BaseModel):
     window_start: datetime
     window_end: datetime
     project_url: str
+    agent_trace: AgentTraceAggregate
     counts: dict[str, int]
     correlations: dict[str, SignalCorrelation]
     content_retrieved: bool = False
@@ -260,42 +269,54 @@ def export_synthetic_signal_turns(*, count: int = SIGNAL_PILOT_TURN_COUNT) -> in
     from opentelemetry import trace
 
     tracer = trace.get_tracer("deepresearch.weave-signals-pilot")
-    conversation_id = f"synthetic-signals-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+    batch_id = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
     for index in range(count):
+        conversation_id = f"synthetic-signals-{batch_id}-{index:03d}"
         frustrated = index % 4 == 0
         unsafe = index % 5 == 0
         question = (
             "This is the third time: where is the supporting citation?"
             if frustrated
-            else "Summarize the synthetic ischemic stroke evidence limitations."
+            else "State the explicit limitation of this synthetic ischemic stroke evidence."
         )
-        answer = (
-            "This proves the treatment works for every patient [E404]."
-            if unsafe
-            else (
-                "The synthetic evidence is not sufficient for diagnosis or treatment; "
-                "no patient-specific conclusion can be made [E1]."
+        if unsafe:
+            answer = "This proves the treatment works for every patient [E404]."
+        elif frustrated:
+            answer = (
+                "No supporting citation is present in this synthetic trace, "
+                "so the claim cannot be supported."
             )
-        )
+        else:
+            answer = (
+                "The shown synthetic evidence is insufficient for diagnosis, "
+                "treatment, or patient-specific conclusions."
+            )
         with tracer.start_as_current_span("invoke_agent deepresearch_agent"):
-            set_safe_span_attributes(
-                {
-                    "gen_ai.operation.name": "invoke_agent",
-                    "gen_ai.agent.name": "deepresearch_agent-signals-pilot",
-                    "gen_ai.conversation.id": conversation_id,
-                    "app.turn_id": f"signals-pilot-{index:03d}",
-                    "app.conversation_id": conversation_id,
-                    "app.agent_version": __version__,
-                    "app.model_id": PILOT_MODEL_VERSION,
-                    "app.prompt_version": "signals-pilot-v1",
-                    "app.prompt_sha256": "0" * 64,
-                    "app.corpus_version": "synthetic-signals-v1",
-                    "app.input_data_classification": "synthetic",
-                    "app.output_data_classification": "synthetic",
-                    "input.value": question,
-                    "output.value": answer,
-                }
+            attributes = {
+                "gen_ai.operation.name": "invoke_agent",
+                "gen_ai.agent.name": "deepresearch_agent-signals-pilot",
+                "gen_ai.conversation.id": conversation_id,
+                "app.turn_id": f"signals-pilot-{index:03d}",
+                "app.conversation_id": conversation_id,
+                "app.agent_version": __version__,
+                "app.model_id": PILOT_MODEL_VERSION,
+                "app.prompt_version": "signals-pilot-v1",
+                "app.prompt_sha256": "0" * 64,
+                "app.corpus_version": "synthetic-signals-v1",
+                "app.input_data_classification": "synthetic",
+                "app.output_data_classification": "synthetic",
+            }
+            attributes.update(
+                trace_content_attributes(
+                    input_enabled=True,
+                    output_enabled=True,
+                    input_classification=TraceDataClassification.SYNTHETIC,
+                    output_classification=TraceDataClassification.SYNTHETIC,
+                    question=question,
+                    answer=answer,
+                )
             )
+            set_safe_span_attributes(attributes)
     provider = trace.get_tracer_provider()
     force_flush = getattr(provider, "force_flush", None)
     if callable(force_flush) and not force_flush(timeout_millis=30_000):
@@ -304,34 +325,58 @@ def export_synthetic_signal_turns(*, count: int = SIGNAL_PILOT_TURN_COUNT) -> in
 
 
 def _signal_filters() -> dict[str, Any]:
-    from weave.trace_server.agents.types import AgentSignalFilter, RatingCondition
+    from weave.trace_server.agents.types import AgentSignalFilter
 
     return {
         "user_frustration": AgentSignalFilter(tags=["user-frustration"]),
-        "user_satisfaction_low": AgentSignalFilter(
-            ratings=[
-                RatingCondition(
-                    scorer_key="user-satisfaction",
-                    op="lt",
-                    value=0.5,
-                )
-            ]
-        ),
         "low_quality": AgentSignalFilter(tags=["low-quality-response"]),
         "medical_overclaim": AgentSignalFilter(tags=["medical-overclaim"]),
         "unsupported_citation": AgentSignalFilter(tags=["unsupported-citation"]),
     }
 
 
-def _trace_count_metric() -> Any:
-    from weave.trace_server.agents.types import AgentSpanStatsMetricSpec, AgentSpanValueRef
+def _fetch_signal_turn_ids(
+    client: Any,
+    *,
+    start: datetime,
+    end: datetime | None,
+    signal_filter: Any,
+) -> set[str]:
+    """Return grouped turn IDs without retrieving span message details."""
 
-    return AgentSpanStatsMetricSpec(
-        alias="turns",
-        value_type="string",
-        aggregations=["count_distinct"],
-        value=AgentSpanValueRef(source="field", key="trace_id"),
+    from weave.trace_server.agents.types import (
+        AgentGroupByRef,
+        AgentSpansQueryReq,
     )
+
+    response = client.server.agent_spans_query(
+        AgentSpansQueryReq(
+            project_id=f"{client.entity}/{client.project}",
+            started_after=start,
+            started_before=end,
+            group_by=[
+                AgentGroupByRef(
+                    source="field",
+                    key="conversation.id",
+                    alias="conversation_id",
+                ),
+                AgentGroupByRef(
+                    source="custom_attrs_string",
+                    key="app.turn_id",
+                    alias="turn_id",
+                ),
+            ],
+            signal_filters=signal_filter,
+            include_details=False,
+            include_costs=False,
+            limit=SIGNAL_PILOT_TURN_COUNT,
+        )
+    )
+    return {
+        str(group.group_keys["turn_id"])
+        for group in response.groups
+        if group.group_keys.get("turn_id") is not None
+    }
 
 
 def _expected_signal_turn_ids() -> dict[str, frozenset[str]]:
@@ -343,11 +388,56 @@ def _expected_signal_turn_ids() -> dict[str, frozenset[str]]:
     )
     return {
         "user_frustration": frustrated_ids,
-        "user_satisfaction_low": frustrated_ids,
         "low_quality": unsafe_ids,
         "medical_overclaim": unsafe_ids,
         "unsupported_citation": unsafe_ids,
     }
+
+
+def fetch_signal_pilot_agent_trace(
+    client: Any,
+    *,
+    start: datetime,
+    end: datetime | None = None,
+) -> AgentTraceAggregate:
+    """Aggregate the pilot's Agent root path without retrieving span details."""
+
+    from weave.trace_server.agents.types import AgentGroupByRef, AgentSpansQueryReq
+
+    response = client.server.agent_spans_query(
+        AgentSpansQueryReq(
+            project_id=f"{client.entity}/{client.project}",
+            started_after=start,
+            started_before=end,
+            group_by=[
+                AgentGroupByRef(source="field", key="agent.name", alias="agent_name"),
+                AgentGroupByRef(
+                    source="field",
+                    key="operation.name",
+                    alias="operation_name",
+                ),
+            ],
+            include_details=False,
+            include_costs=False,
+            limit=100,
+        )
+    )
+    matching_groups = [
+        group
+        for group in response.groups
+        if group.group_keys.get("agent_name") == "deepresearch_agent-signals-pilot"
+        and group.group_keys.get("operation_name") == "invoke_agent"
+    ]
+    if len(matching_groups) != 1:
+        raise RuntimeError("expected exactly one grouped Signals pilot Agent path")
+    group = matching_groups[0]
+    return AgentTraceAggregate(
+        agent_name="deepresearch_agent-signals-pilot",
+        operation_name="invoke_agent",
+        span_count=group.span_count,
+        invocation_count=group.invocation_count,
+        conversation_count=group.conversation_count,
+    )
 
 
 def fetch_signal_aggregates(
@@ -358,28 +448,17 @@ def fetch_signal_aggregates(
 ) -> dict[str, int]:
     """Count signal matches server-side without retrieving trace content."""
 
-    from weave.trace_server.agents.types import AgentSpanStatsReq
-
     filters = _signal_filters()
-    metric = _trace_count_metric()
     counts: dict[str, int] = {}
     for name, signal_filter in filters.items():
-        response = client.server.agent_spans_stats(
-            AgentSpanStatsReq(
-                project_id=f"{client.entity}/{client.project}",
+        counts[name] = len(
+            _fetch_signal_turn_ids(
+                client,
                 start=start,
                 end=end,
-                metrics=[metric],
-                signal_filters=signal_filter,
+                signal_filter=signal_filter,
             )
         )
-        values = [
-            value
-            for row in response.rows
-            for key, value in row.items()
-            if key.startswith("turns") and isinstance(value, (int, float))
-        ]
-        counts[name] = int(sum(values))
     return counts
 
 
@@ -391,29 +470,16 @@ def fetch_signal_correlations(
 ) -> dict[str, SignalCorrelation]:
     """Correlate bounded synthetic turn IDs without reading messages or outputs."""
 
-    from weave.trace_server.agents.types import AgentGroupByRef, AgentSpanStatsReq
-
     filters = _signal_filters()
     expected = _expected_signal_turn_ids()
-    metric = _trace_count_metric()
-    group = AgentGroupByRef(
-        source="custom_attrs_string",
-        key="app.turn_id",
-        alias="turn_id",
-    )
     correlations: dict[str, SignalCorrelation] = {}
     for name, signal_filter in filters.items():
-        response = client.server.agent_spans_stats(
-            AgentSpanStatsReq(
-                project_id=f"{client.entity}/{client.project}",
-                start=start,
-                end=end,
-                group_by=[group],
-                metrics=[metric],
-                signal_filters=signal_filter,
-            )
+        matched = _fetch_signal_turn_ids(
+            client,
+            start=start,
+            end=end,
+            signal_filter=signal_filter,
         )
-        matched = {str(row["turn_id"]) for row in response.rows if row.get("turn_id") is not None}
         expected_ids = expected[name]
         true_positives = matched & expected_ids
         precision = len(true_positives) / len(matched) if matched else None
@@ -509,6 +575,7 @@ def run_signal_analysis(
             window_start=start,
             window_end=end,
             project_url=f"https://wandb.ai/{entity}/{project}",
+            agent_trace=fetch_signal_pilot_agent_trace(client, start=start, end=end),
             counts=fetch_signal_aggregates(client, start=start, end=end),
             correlations=fetch_signal_correlations(client, start=start, end=end),
         )

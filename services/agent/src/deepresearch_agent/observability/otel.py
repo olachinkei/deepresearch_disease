@@ -42,6 +42,8 @@ _SAFE_ATTRIBUTE_KEYS = frozenset(
         "gen_ai.operation.name",
         "gen_ai.agent.name",
         "gen_ai.conversation.id",
+        "gen_ai.input.messages",
+        "gen_ai.output.messages",
         "input.value",
         "output.value",
     }
@@ -198,7 +200,59 @@ def trace_content_attributes(
     }
     attributes: dict[str, str] = {}
     if input_enabled and input_classification in exportable:
-        attributes["input.value"] = question
+        attributes["input.value"] = trace_input_value(question)
+        attributes["gen_ai.input.messages"] = trace_input_messages(question)
     if output_enabled and output_classification in exportable:
-        attributes["output.value"] = answer
+        attributes["output.value"] = trace_output_value(answer)
+        attributes["gen_ai.output.messages"] = trace_output_messages(answer)
     return attributes
+
+
+def trace_input_value(question: str) -> str:
+    """Encode the approved question as the user-message shape W&B Agents expects."""
+
+    return json.dumps(
+        [{"role": "user", "content": question}],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
+def trace_output_value(answer: str) -> str:
+    """Encode the approved final answer without exporting intermediate messages."""
+
+    return json.dumps(
+        {"content": answer},
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
+def trace_input_messages(question: str) -> str:
+    """Encode the approved question with the OTel GenAI message convention."""
+
+    return json.dumps(
+        [
+            {
+                "role": "user",
+                "parts": [{"type": "text", "content": question}],
+            }
+        ],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
+def trace_output_messages(answer: str) -> str:
+    """Encode only the approved final answer as an OTel GenAI message."""
+
+    return json.dumps(
+        [
+            {
+                "role": "assistant",
+                "parts": [{"type": "text", "content": answer}],
+            }
+        ],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )

@@ -54,7 +54,7 @@
 - [x] raw message / tool content captureが無効であることをpayload testで確認する。
 - [x] `input.value` / `output.value` の独立flag、全組合せ、server-owned分類を確認する。
 - [x] `app.turn_id` から実Agent turn traceを検索し、feedbackを同期する。
-- [ ] Agents Signalsの対象条件と出力を確認する。
+- [x] Agents Signalsの対象条件と出力を合成20 turnで確認する。
 - [x] spike結果をADRまたは実行記録へ残す。
 
 ### Exit criteria
@@ -206,9 +206,10 @@
 - [x] zero-incident指標、閾値境界、nearest-rank p95をtyped summaryへ集約する。
 - [x] Weave Evaluationをversioned datasetで実W&B上で実行し、sanitized evidenceへ
   immutable refと全versionを記録する。
-- [ ] User Frustration / Satisfactionをpilotで100%適用する。
-- [ ] Low Quality Responseを20%適用する。
-- [ ] custom medical overclaim / unsupported citationを10〜20%適用する。
+- [x] User Frustrationをpilotで100%適用する。User Satisfactionは現行UIにrating作成
+  flowがないため、利用可能な環境で別pilotとする。
+- [x] Low Quality Responseを20%適用する。
+- [x] custom medical overclaim / unsupported citationを15%適用する。
 - [x] server-side filterと表形式集計の分析script / runbookを作る。
 - [x] gold datasetの二者review、adjudication、case/label hash、coverage、
   provenance/license、IAAをfail-closedで検証するschema/CLIを作る。

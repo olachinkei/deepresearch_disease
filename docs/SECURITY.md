@@ -80,6 +80,11 @@ server設定のPublicまたはSynthetic allowlistと完全一致した入力だ�
 - 質問のW&B `input.value` 送信
 - 最終回答のW&B `output.value` 送信
 
+Agents Signals向けの `gen_ai.input.messages` / `gen_ai.output.messages` は独立した
+承認経路ではない。対応する `input.value` / `output.value` と同じfeature flag、
+server-owned分類、fingerprint allowlistを使い、質問と最終回答だけをOTel GenAI
+message形式で複製する。中間message、system instruction、tool payloadは含めない。
+
 W&B trace contentには次の独立flagとserver-owned allowlistを使用する。
 
 - `AGENT_TRACE_INPUT_CONTENT_ENABLED`
@@ -248,7 +253,8 @@ OTLP root spanへ送信できる情報:
 質問の `input.value` と最終回答の `output.value` は、それぞれの個別承認と独立
 feature flagがある環境だけで送る。flagが有効でも、入力全体のfingerprintが
 Public/Synthetic allowlistに一致しない場合は送らない。Internal Evidenceを含む出力も
-送らない。分類名は本文を含まない決定的属性として記録できる。
+送らない。Agents Signals用のOTel GenAI message属性にも同じ判定を適用する。
+分類名は本文を含まない決定的属性として記録できる。
 
 通常ログはID、件数、status、error classを中心にし、本文を避ける。trace分析はserver-side filterで絞り、集約表だけをLLMへ渡す。
 

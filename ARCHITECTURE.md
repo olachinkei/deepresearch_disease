@@ -232,7 +232,7 @@ rankingの入力、snapshot、top-kをrun manifestへ記録する。embedding mo
 
 ADKのtraceをraw OTelでWeave Agents endpointへ送る。標準環境変数がexporter、認証、project routingを所有する。
 
-最小pluginは動的な安全属性だけをroot spanへ追加する。raw message / tool captureは無効にし、質問と最終回答の送信はfeature flagで分離する。
+最小pluginは動的な安全属性だけをroot spanへ追加する。raw message / tool captureは無効にし、質問と最終回答の送信はfeature flagで分離する。Agents Signals用のOTel GenAI message属性は、同じgateで許可された質問と最終回答だけを複製する。
 
 `app.turn_id` をWeb DB、ADK state、root spanで共通の相関IDとして使う。OTLP exportは非同期であるため、feedback同期はAgent turnの `trace_id` を即時取得できることを前提にしない。Agents endpointのspanはAgents span APIで検索し、旧Call APIへは依存しない。
 
