@@ -13,7 +13,7 @@
 3. 採択済みの[ADR](docs/adr/)
 4. [アーキテクチャ](ARCHITECTURE.md)
 5. [MVPプロダクト仕様](docs/product-specs/mvp.md)
-6. [実行計画](docs/exec-plans/active/mvp.md)
+6. [完了済みMVP実行計画](docs/exec-plans/completed/mvp.md)
 
 矛盾を見つけた場合は、都合のよい解釈で実装せず、関連文書を同じ変更で更新する。
 

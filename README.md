@@ -65,3 +65,10 @@ git add <公開対象>
 - 社内PDF断片、標的仮説、質問・回答の外部送信は、データ管理者の明示承認まで無効です。
 
 詳細は [instruction.md](./instruction.md)、[ARCHITECTURE.md](./ARCHITECTURE.md)、[docs/SECURITY.md](./docs/SECURITY.md) を参照してください。
+
+## MVP status
+
+公開・合成データ限定のtechnical MVPは2026-08-01に完了した。完了条件、実行証跡、
+既知リスクは[完了済み実行計画](./docs/exec-plans/completed/mvp.md)に記録している。
+合成・未SME reviewの評価結果は科学的・臨床的releaseを許可せず、
+`scientific_release_status=ineligible`を維持する。
