@@ -1,30 +1,18 @@
 import { ConversationRepository } from "~/features/conversation/repository.server";
 import { FeedbackRepository } from "~/features/feedback/repository.server";
 import { feedbackInputSchema } from "~/features/feedback/schema";
-import { IdentityRepository } from "~/features/identity/repository.server";
-import { resolveLocalIdentity } from "~/features/identity/service.server";
-import { getAppDatabase } from "~/shared/database/client.server";
+import { requirePostTurnIdentityContext } from "~/features/identity/service.server";
 
 import type { Route } from "./+types/api.turns.$turnId.feedback";
 
 export async function action({ request, params }: Route.ActionArgs) {
-  if (request.method !== "POST") {
-    return Response.json({ error: "Method not allowed." }, { status: 405 });
+  const context = await requirePostTurnIdentityContext(request, params.turnId);
+  if (context instanceof Response) {
+    return context;
   }
-  if (!params.turnId) {
-    return Response.json({ error: "Turn ID is required." }, { status: 400 });
-  }
-
-  const database = await getAppDatabase();
-  const identity = await resolveLocalIdentity(
-    request,
-    new IdentityRepository(database),
-  );
-  if (!identity) {
-    return Response.json({ error: "Local identity is required." }, { status: 401 });
-  }
+  const { database, identity, turnId } = context;
   const ownedTurn = await new ConversationRepository(database).findTurnOwned(
-    params.turnId,
+    turnId,
     identity.id,
   );
   if (!ownedTurn || ownedTurn.turn.status !== "completed") {
@@ -46,10 +34,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const repository = new FeedbackRepository(database);
-  const existing = await repository.findForTurn(params.turnId, identity.id);
+  const existing = await repository.findForTurn(turnId, identity.id);
   const feedback = await repository.upsert({
     ...parsed.data,
-    turnId: params.turnId,
+    turnId,
     userId: identity.id,
   });
   return Response.json(
