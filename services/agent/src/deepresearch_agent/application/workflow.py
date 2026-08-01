@@ -74,6 +74,7 @@ class ResearchWorkflow:
         self._adk_synthesizer: Synthesizer | None = None
 
     async def close(self) -> None:
+        await self._embeddings.close()
         if self._exa:
             await self._exa.close()
         if self._metadata_verifier:
@@ -369,7 +370,7 @@ class ResearchWorkflow:
                     "gen_ai.agent.name": "deepresearch_agent",
                 }
             )
-            query_embedding = (await self._embeddings.embed([query]))[0]
+            query_embedding = (await self._embeddings.embed_queries([query]))[0]
             return await asyncio.to_thread(
                 self._corpus.search,
                 query=query,

@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from deepresearch_agent.embedding_contract import EMBEDDING_DIMENSION, EMBEDDING_MODEL_ID
 from deepresearch_agent.governance.approvals import (
     ApprovalDecision,
     DataClass,
@@ -40,6 +41,9 @@ class Settings(BaseSettings):
     prompt_version: Literal["1.0.0"] = SYNTHESIS_PROMPT_VERSION
     prompt_sha256: str = SYNTHESIS_PROMPT_SHA256
     corpus_version: str = "public-seed-20260730-c8457953"
+    embedding_provider: Literal["hash", "gemini"] = "hash"
+    embedding_model: Literal["gemini-embedding-2"] = EMBEDDING_MODEL_ID
+    embedding_dimension: int = EMBEDDING_DIMENSION
     hmac_secret: SecretStr = SecretStr("local-development-only-change-me")
     environment: Literal["local", "pilot"] = "local"
     deployment_profile: Literal[
@@ -55,6 +59,7 @@ class Settings(BaseSettings):
 
     allow_target_to_exa: bool = False
     allow_public_content_to_gemini: bool = False
+    allow_public_content_to_gemini_embeddings: bool = False
     allow_internal_content_to_gemini: bool = False
     allow_research_hypothesis_to_gemini: bool = False
     trace_input_content_enabled: bool = False
@@ -97,6 +102,13 @@ class Settings(BaseSettings):
             raise ValueError("AGENT_PROMPT_SHA256 does not match the pinned prompt")
         return value
 
+    @field_validator("embedding_dimension")
+    @classmethod
+    def validate_embedding_dimension(cls, value: int) -> int:
+        if value != EMBEDDING_DIMENSION:
+            raise ValueError("AGENT_EMBEDDING_DIMENSION must be 768")
+        return value
+
     @field_validator(
         "trace_public_input_fingerprints",
         "trace_synthetic_input_fingerprints",
@@ -116,6 +128,14 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_trace_content_policy(self) -> Settings:
+        if self.embedding_provider == "gemini":
+            if not self.allow_public_content_to_gemini_embeddings:
+                raise ValueError(
+                    "Gemini embeddings require "
+                    "AGENT_ALLOW_PUBLIC_CONTENT_TO_GEMINI_EMBEDDINGS=true"
+                )
+            if self.google_api_key is None:
+                raise ValueError("Gemini embeddings require GOOGLE_API_KEY")
         if self.legacy_trace_content_enabled:
             raise ValueError(
                 "AGENT_TRACE_CONTENT_ENABLED was removed; configure independent "

@@ -96,12 +96,16 @@
 - [x] PubMed / Europe PMC、Crossref、Unpaywall adapterを作る。
 - [x] 200件以上の文献メタデータを収集する。
 - [x] DOI、PMID、canonical URL、正規化タイトルで重複排除する。
-- [ ] OA / license判定を行い、保存可能な本文だけを取得する。
+- [x] 公開デモ用inclusion criteria、license allowlist、取得元優先順位を固定する。
+- [x] Europe PMC OA XMLを取得し、許諾済み本文だけを保存してskip reportを残す。
 - [x] PyMuPDFでpage / sectionを維持して抽出する。
 - [x] OCR必須文書を理由付きでskipする。
 - [x] 350〜700 token、1文overlapでchunk化する。
 - [x] FTS5 / BM25 indexを作る。
-- [x] 768次元embeddingとsnapshot metadataを保存する。
+- [x] `gemini-embedding-2` の768次元embeddingとsnapshot metadataを保存し、
+  provider/snapshot不一致を起動時に拒否する。
+- [x] document/chunkへsnapshot IDをmigration/backfillし、1 DB内のsnapshot混在と
+  immutable snapshot更新を拒否する。
 - [x] RRFによるhybrid retrievalを実装する。
 - [x] `Document` / `Evidence` 型へ正規化する。
 - [x] Recall@10 / nDCG@10のsynthetic retrieval datasetを作る。
@@ -177,7 +181,7 @@
 - [x] multi-turnと再読込を実装する。
 - [x] feedback UIとローカルqueueを実装する。
 - [x] feedbackのturn/user一意性、revision同期、再読込後の状態復元を実装する。
-- [x] Noto Sans JPとLucideを用い、axe、keyboard、mobile focus、live region、
+- [x] Noto Sans JPとLucideを用い、axe、keyboard、live region、
   reduced motionのaccessibility baselineを確認する。検証項目は
   [Web Accessibility Baseline Checklist](../../accessibility-checklist.md)へ記録する。
 
@@ -200,7 +204,8 @@
 - [x] versioned corpus/model/promptで実retrieval・synthesis・multi-turn workflowを実行する。
 - [x] required metric欠落をfail closedにし、technical/scientific statusを分離する。
 - [x] zero-incident指標、閾値境界、nearest-rank p95をtyped summaryへ集約する。
-- [ ] Weave Evaluationをversioned datasetで実W&B上で実行する。
+- [x] Weave Evaluationをversioned datasetで実W&B上で実行し、sanitized evidenceへ
+  immutable refと全versionを記録する。
 - [ ] User Frustration / Satisfactionをpilotで100%適用する。
 - [ ] Low Quality Responseを20%適用する。
 - [ ] custom medical overclaim / unsupported citationを10〜20%適用する。

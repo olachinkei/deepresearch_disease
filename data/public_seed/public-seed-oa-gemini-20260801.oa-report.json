@@ -1,0 +1,2210 @@
+{
+  "schema_version": "1.0",
+  "policy_version": "public-demo-1.0",
+  "snapshot_id": "public-seed-20260801-63940c61",
+  "stored": 12,
+  "skipped": 208,
+  "failed": 0,
+  "records": [
+    {
+      "document_id": "epmc:7477192",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:21830957",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30415602",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42310866",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:18815396",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29129157",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29364767",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42262198",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:7563451",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22064429",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32291094",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42251764",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:19903920",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23992601",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30403574",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:PPR1287657",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:17272767",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23652265",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32353746",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42522175",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:19622820",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22085343",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32381264",
+      "status": "skipped",
+      "reason": "license_not_allowlisted",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:PPR1288118",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:11723017",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22553043",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31291966",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:21.964733Z",
+      "checksum_sha256": "45d6dcfc21f22d1324abfb72c432ff64402d77fe70c2b32c75a1e5409c2f80f9",
+      "chunk_count": 15
+    },
+    {
+      "document_id": "epmc:PPR1288079",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:20130219",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23126252",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29786478",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42521621",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:12869717",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:25773378",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:34785599",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42517197",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:19399161",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:22.434843Z",
+      "checksum_sha256": "32b16b071b80f7df35c5672626d5e8a7bc8d32d78573b54242c7d17287db5be4",
+      "chunk_count": 10
+    },
+    {
+      "document_id": "epmc:24963567",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33817340",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42509439",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:10655103",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23920012",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29766750",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42515851",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:15800226",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23390923",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31056284",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42509538",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:17635891",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:24998121",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31591603",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42508567",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:11509060",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23803136",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33076218",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:23.421890Z",
+      "checksum_sha256": "f748362f95a907ff02fc0ae3fd8f697bee9e215061101f526141749d5976d416",
+      "chunk_count": 12
+    },
+    {
+      "document_id": "epmc:42507529",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:17272772",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23394476",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31067369",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42504987",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:21351304",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:21472114",
+      "status": "skipped",
+      "reason": "oa_full_text_not_found",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30379577",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42504877",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:16357086",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:24963566",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32222135",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42522314",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:16291709",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:27019327",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29766772",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42522301",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:10583007",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23387822",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32947473",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42501340",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:15961709",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:21475241",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:35387495",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42444415",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:14762035",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22932714",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:35794095",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:25.887570Z",
+      "checksum_sha256": "fcd42c456f64f5cda1899f2effa2052c30bde0b689a2607dcc6bd56445902807",
+      "chunk_count": 17
+    },
+    {
+      "document_id": "epmc:42517391",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:20339144",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29040874",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30422209",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42508338",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:18309168",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23133515",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:26.354841Z",
+      "checksum_sha256": "2d1dc4acc6976ce08dced82ecfa5fb31c419e3e54f6b69e32ef9163208795da2",
+      "chunk_count": 5
+    },
+    {
+      "document_id": "epmc:33724327",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42499241",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:12968085",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:26886418",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30865215",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42498200",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:10557349",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:28987927",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33144066",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42497969",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:19919699",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23265346",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30002145",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42497132",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:9861045",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:26268692",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30580575",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42495732",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:10591384",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:25304324",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31699365",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42495739",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:12937084",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:28902590",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:34477808",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42495733",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:12435860",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:21780946",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33957000",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42499538",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:11794192",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23321438",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32432996",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42492703",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:9445320",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23514286",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32174916",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:27.873231Z",
+      "checksum_sha256": "3b2555d2a3de751271bb58f0abf235e3f987d9a55d5e6d83f90c4617cebedd4d",
+      "chunk_count": 10
+    },
+    {
+      "document_id": "epmc:PPR1283721",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:19590057",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:26339036",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31062335",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42490679",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:2496789",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:24076487",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32427863",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:28.349530Z",
+      "checksum_sha256": "2e4b8a5f6882fdfb2a787b5008256ccab68eb75bde6dbdd216f75ee4595a3917",
+      "chunk_count": 10
+    },
+    {
+      "document_id": "epmc:42489248",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:18925972",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:28763550",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31221990",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:29.180866Z",
+      "checksum_sha256": "7435ed78d2e1c028425f8371cb700d63ee66026b4a32e466d3758556c32939f8",
+      "chunk_count": 8
+    },
+    {
+      "document_id": "epmc:42488958",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:15548777",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:24746419",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29949404",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42486684",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:8018000",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22068990",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33464334",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42485024",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:17360906",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:25771069",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32354259",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42484740",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:11559501",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22858289",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33003973",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42484654",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:18025032",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:25806703",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33464335",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42509687",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:15208268",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22435369",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32899616",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42509681",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:18753638",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:27469212",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31095084",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42505408",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:9183357",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:26733784",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:31.855002Z",
+      "checksum_sha256": "c588768dd2418b1ff5c1bb3ce83f5e11a9d5d610794422a47e0f49844a0bdf35",
+      "chunk_count": 18
+    },
+    {
+      "document_id": "epmc:33444733",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42502486",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:16432056",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:26455456",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31948641",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42485702",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:2042939",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:28248201",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:29731013",
+      "status": "skipped",
+      "reason": "pmcid_missing_or_invalid",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42480634",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:16874299",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22414893",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32194375",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:32.244473Z",
+      "checksum_sha256": "1035079df7668d8a681179ad86b3d0c082311badedc3bca8eb18f77a3168718f",
+      "chunk_count": 9
+    },
+    {
+      "document_id": "epmc:PPR1282906",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:18308347",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:23469845",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31244932",
+      "status": "skipped",
+      "reason": "license_not_allowlisted",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42479995",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:17498584",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:28417216",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32668111",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42477809",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:2496858",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:25359164",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:32640953",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42477731",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:12923200",
+      "status": "skipped",
+      "reason": "pmcid_missing_or_invalid",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:22931315",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:33563020",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42477621",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:17521716",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:25355814",
+      "status": "skipped",
+      "reason": "oa_full_text_not_found",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:36389728",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42476319",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:18753639",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:26170628",
+      "status": "skipped",
+      "reason": "license_not_allowlisted",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:31738483",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:PPR1281395",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:2303826",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:28064357",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:30483945",
+      "status": "skipped",
+      "reason": "unsafe_xml_declaration",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42475235",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:8678931",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:26133935",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:34235259",
+      "status": "skipped",
+      "reason": "license_not_allowlisted",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:42472599",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:20713126",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    },
+    {
+      "document_id": "epmc:25404894",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:38.126649Z",
+      "checksum_sha256": "976379ee2f6183b7bb97adecd862eaeb55d49736ea9bd462b7c732eb59754cf4",
+      "chunk_count": 11
+    },
+    {
+      "document_id": "epmc:29420958",
+      "status": "stored",
+      "reason": null,
+      "source": "europe_pmc_fulltext_xml",
+      "license": "CC-BY-4.0",
+      "acquired_at": "2026-08-01T01:22:39.103771Z",
+      "checksum_sha256": "124e06ac931d55f224676d3e0b812e5b7def4ca336b973676ca27073f9c0ba6b",
+      "chunk_count": 6
+    },
+    {
+      "document_id": "epmc:42472441",
+      "status": "skipped",
+      "reason": "not_open_access",
+      "source": "europe_pmc_fulltext_xml",
+      "license": null,
+      "acquired_at": null,
+      "checksum_sha256": null,
+      "chunk_count": 0
+    }
+  ]
+}

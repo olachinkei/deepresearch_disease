@@ -16,16 +16,19 @@ class SourceCollectionStats(BaseModel):
 
 
 class SeedContentPolicy(BaseModel):
-    metadata_only: Literal[True] = True
-    article_text_downloaded: Literal[False] = False
-    oa_full_text_handling: Literal["url_and_license_only"] = "url_and_license_only"
+    metadata_only: bool = True
+    article_text_downloaded: bool = False
+    oa_full_text_handling: Literal[
+        "url_and_license_only",
+        "europe_pmc_allowlisted_xml",
+    ] = "url_and_license_only"
     paywalled_text_stored: Literal[False] = False
 
 
 class PublicSeedManifest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0", "2.0"] = "1.0"
     snapshot_id: str
     created_at: datetime
     query: str

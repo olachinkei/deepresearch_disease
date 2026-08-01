@@ -32,8 +32,11 @@ class FakeCorpus:
 
 
 class FakeEmbeddings:
-    async def embed(self, texts: list[str]) -> list[list[float]]:
+    async def embed_queries(self, texts: list[str]) -> list[list[float]]:
         return [[0.0] for _ in texts]
+
+    async def close(self) -> None:
+        return None
 
 
 class FakeSessions:

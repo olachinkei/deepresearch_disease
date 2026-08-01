@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Any
 
 from deepresearch_agent.evaluation.scorers import (
@@ -21,7 +20,7 @@ def build_weave_evaluation(
     *,
     name: str,
     rows: list[dict[str, Any]],
-    model: Callable[..., Any],
+    metadata: dict[str, Any] | None = None,
 ) -> object:
     """Create, but do not run, a versionable Weave Dataset/Evaluation."""
 
@@ -94,10 +93,7 @@ def build_weave_evaluation(
         )
         conflict = contradiction_handling_score(
             output.get("answer_markdown", ""),
-            [
-                item.get("support_level", "unknown")
-                for item in output.get("evidence", [])
-            ],
+            [item.get("support_level", "unknown") for item in output.get("evidence", [])],
         )
         return {
             "passed": schema["passed"] and truncation["passed"] and conflict["passed"],
@@ -120,5 +116,6 @@ def build_weave_evaluation(
             "version": "v1",
             "scorer_version": "v2",
             "scientific_release_eligible": False,
+            **(metadata or {}),
         },
-    ), model
+    )

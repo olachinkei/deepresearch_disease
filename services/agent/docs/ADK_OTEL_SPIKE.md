@@ -2,13 +2,14 @@
 
 ## Status
 
-As of 2026-07-30, raw OTel ingestion, ADK/Gemini spans, conversation grouping,
+As of 2026-08-01, raw OTel ingestion, ADK/Gemini spans, conversation grouping,
 token usage, privacy checks, Agent turn lookup, feedback, and flagged-trace
 analysis pass against the configured W&B project. The Agents endpoint stores data
 in the Agents span model: the legacy Calls API correctly reports zero Calls for
 these exports and must not be used to assess Agents ingestion.
 
-The remaining spike item is real Signals configuration and output validation.
+The versioned Weave Evaluation technical pilot also passes with four synthetic
+workflow cases. The remaining spike item is real Signals UI configuration and output validation.
 Signals are therefore not yet a release gate.
 
 Runtime tracing uses the standard OTLP HTTP exporter only. It does not initialize

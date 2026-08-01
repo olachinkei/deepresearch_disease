@@ -163,8 +163,7 @@ Evidence tableには、少なくともclaim、support level、evidence stage、s
 
 検索query、tool payload、社内excerpt、secret、stack traceはUIへ表示しない。
 streaming本文全体をlive regionにせず、進捗だけを小さな`role=status`領域で
-通知する。mobile履歴は開閉状態、Escapeでのclose、triggerへのfocus returnを
-提供し、keyboard-onlyで主要フローを完了できるようにする。重大なaccessibility
+通知する。keyboard-onlyで主要フローを完了できるようにする。重大なaccessibility
 regressionはaxeとPlaywrightで検知し、reduced motion設定を尊重する。
 公開SSE schema 2.0はevent IDと単調sequenceを必須とする。terminal前の切断、
 conversation/turn不一致、順序違反はretryable protocol errorとして表示し、同じ

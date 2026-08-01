@@ -65,6 +65,9 @@ server設定のPublicまたはSynthetic allowlistと完全一致した入力だ�
 | Secret | 送らない | headerのみ | headerのみ | content送信禁止 |
 
 外部送信は目的別のfeature flagで管理する。1つの包括的なflagで複数の承認を代用しない。
+公開・合成corpusのembedding送信には
+`AGENT_ALLOW_PUBLIC_CONTENT_TO_GEMINI_EMBEDDINGS=true` を明示し、providerを
+`gemini` に設定する。社内文書の送信許可には流用しない。
 
 ## 5. Feature flag
 
@@ -72,6 +75,7 @@ server設定のPublicまたはSynthetic allowlistと完全一致した入力だ�
 
 - 社内PDF ingestion
 - 社内excerptのGemini送信
+- 公開・合成corpusのGemini embedding送信
 - Research-sensitive queryのExa送信
 - 質問のW&B `input.value` 送信
 - 最終回答のW&B `output.value` 送信
@@ -184,6 +188,8 @@ prompt injection検体をsecurity testへ含める。
 
 ## 10. Corpusとlicense
 
+- 公開デモの具体的なinclusion、license allowlist、取得元優先順位は
+  [corpus inclusion policy](corpus-inclusion-policy.md) に固定する。
 - DOI、PMID、canonical URL、取得元、取得日時を記録する。
 - OAまたは明示的な保存許諾が確認できる本文だけを保存する。
 - paywall本文、利用条件不明の本文を保存しない。
