@@ -19,6 +19,26 @@ import {
 
 import type { FeedbackInput } from "./schema";
 
+function readyForSync(now: Date) {
+  const nowIso = now.toISOString();
+  return or(
+    and(
+      or(
+        eq(feedbackQueue.syncStatus, "pending"),
+        eq(feedbackQueue.syncStatus, "failed"),
+      ),
+      or(
+        isNull(feedbackQueue.nextAttemptAt),
+        lte(feedbackQueue.nextAttemptAt, nowIso),
+      ),
+    ),
+    and(
+      eq(feedbackQueue.syncStatus, "syncing"),
+      lte(feedbackQueue.nextAttemptAt, nowIso),
+    ),
+  );
+}
+
 export class FeedbackRepository {
   constructor(private readonly db: AppDatabase) {}
 
@@ -135,24 +155,7 @@ export class FeedbackRepository {
     return this.db
       .select()
       .from(feedbackQueue)
-      .where(
-        or(
-          and(
-            or(
-              eq(feedbackQueue.syncStatus, "pending"),
-              eq(feedbackQueue.syncStatus, "failed"),
-            ),
-            or(
-              isNull(feedbackQueue.nextAttemptAt),
-              lte(feedbackQueue.nextAttemptAt, now.toISOString()),
-            ),
-          ),
-          and(
-            eq(feedbackQueue.syncStatus, "syncing"),
-            lte(feedbackQueue.nextAttemptAt, now.toISOString()),
-          ),
-        ),
-      )
+      .where(readyForSync(now))
       .orderBy(asc(feedbackQueue.createdAt))
       .limit(limit);
   }
@@ -170,22 +173,7 @@ export class FeedbackRepository {
         and(
           eq(feedbackQueue.id, id),
           eq(feedbackQueue.revision, revision),
-          or(
-            and(
-              or(
-                eq(feedbackQueue.syncStatus, "pending"),
-                eq(feedbackQueue.syncStatus, "failed"),
-              ),
-              or(
-                isNull(feedbackQueue.nextAttemptAt),
-                lte(feedbackQueue.nextAttemptAt, now.toISOString()),
-              ),
-            ),
-            and(
-              eq(feedbackQueue.syncStatus, "syncing"),
-              lte(feedbackQueue.nextAttemptAt, now.toISOString()),
-            ),
-          ),
+          readyForSync(now),
         ),
       );
     return result.rowsAffected === 1;

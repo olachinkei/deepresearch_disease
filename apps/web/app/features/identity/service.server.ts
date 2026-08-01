@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
 
+import { getAppDatabase } from "~/shared/database/client.server";
+import { requirePostTurnId } from "~/shared/http";
+
 import {
   getSessionSecret,
   parseIdentityCookie,
@@ -17,6 +20,33 @@ export async function resolveLocalIdentity(
     getSessionSecret(),
   );
   return id ? repository.findById(id) : undefined;
+}
+
+async function resolveLocalIdentityContext(request: Request) {
+  const database = await getAppDatabase();
+  const identity = await resolveLocalIdentity(
+    request,
+    new IdentityRepository(database),
+  );
+  return identity ? { database, identity } : undefined;
+}
+
+export async function requirePostTurnIdentityContext(
+  request: Request,
+  turnId: string | undefined,
+) {
+  const validated = requirePostTurnId(request, turnId);
+  if (validated instanceof Response) {
+    return validated;
+  }
+  const context = await resolveLocalIdentityContext(request);
+  if (!context) {
+    return Response.json(
+      { error: "Local identity is required." },
+      { status: 401 },
+    );
+  }
+  return { ...context, ...validated };
 }
 
 export async function ensureLocalIdentity(input: {
